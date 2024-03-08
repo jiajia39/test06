@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.framework.emt.system.domain.goodscategory.mapper.GoodsCategoryMapper">
+    <select id="list" resultType="com.framework.emt.system.domain.goodscategory.response.GoodsCategoryTreeResponse">
+        select *,
+        category.id,
+        (select count(1)
+        from goods
+        where goods.category_parent_id_path like concat('%', category.id, '%')
+        <if test="request.startTime != null and request.endTime!=null">
+            AND goods.listing_time &gt;= #{request.startTime}
+            AND goods.listing_time &lt;= #{request.endTime} and goods.enable_listing=1
+        </if>
+        ) as goods_count
+        from goods_category category
+        where category.is_deleted = 0 and category.enable_flag=1
+        <if test="request.excludeLevel !=null ">
+            AND level != #{request.excludeLevel}
+        </if>
+    </select>
+    <select id="categoryProportion"
+            resultType="com.framework.emt.system.domain.statistics.response.StatisticsProportionResponse">
+        select
+        title as name,
+        (select count(1) from goods where goods.enable_listing=1 and is_deleted=0
+        <if test="request.startDate != null and request.endDate!=null">
+            AND Date(goods.listing_time) &gt;= #{request.startDate}
+            AND Date(goods.listing_time) &lt;= #{request.endDate}
+        </if>
+        <if test="request.parentCategoryId !=null ">
+            AND category_parent_id_path like concat('%', #{request.parentCategoryId}, '%')
+        </if>
+        and category_id =goods_category.id )as count
+        from goods_category
+        where
+        is_deleted=0
+        <if test="request.level !=null ">
+            AND level = #{request.level}
+        </if>
+    </select>
+
+
+</mapper>

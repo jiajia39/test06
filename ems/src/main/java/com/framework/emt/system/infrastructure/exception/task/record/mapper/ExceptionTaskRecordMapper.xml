@@ -1,0 +1,325 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.framework.emt.system.infrastructure.exception.task.record.mapper.ExceptionTaskRecordMapper">
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, tenant_id, create_user, update_user, create_time, update_time, create_dept, status, version, is_deleted,
+        exception_task_code, exception_task_id, record_id, record_node, record_version, record_num, record_status,
+        record_substatus, record_type, submit_user_id, accept_user_id, record_content, record_remark
+    </sql>
+    <select id="statisticsDayTrend"
+            resultType="com.framework.emt.system.domain.statistics.response.StatisticsTrendValueResponse">
+        <include
+                refid="com.framework.emt.system.infrastructure.exception.task.task.mapper.ExceptionTaskMapper.get_day"/>
+        SELECT
+        generated_dates.date AS date,
+        COUNT(DISTINCT submit.id) AS value
+        FROM generated_dates
+        LEFT JOIN emt_exception_task_record as record ON DATE(record.record_time) = generated_dates.date
+        and record.is_deleted = 0
+        <if test="type != null and type =='suspend'">
+            AND record_type=9
+        </if>
+        LEFT JOIN emt_exception_task as task on task.id=record.exception_task_id and task.is_deleted=0
+        LEFT JOIN emt_exception_task_submit as submit on task.id=submit.exception_task_id and
+        task.submit_version=submit.submit_version
+        and submit.is_deleted=0
+        <if test="deptIds != null and deptIds.size>0">
+            AND submit.dept_id in
+            <foreach collection="deptIds" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="exceptionCategoryId != null">
+            AND submit.exception_category_id = #{exceptionCategoryId}
+        </if>
+        <if test="exceptionProcessId != null">
+            AND submit.exception_process_id = #{exceptionProcessId}
+        </if>
+        <if test="workspaceLocationId != null">
+            AND submit.workspace_location_id = #{workspaceLocationId}
+        </if>
+        GROUP BY generated_dates.date
+        ORDER BY generated_dates.date;
+
+    </select>
+
+    <select id="statisticsWeekTrend"
+            resultType="com.framework.emt.system.domain.statistics.response.StatisticsTrendValueResponse">
+        <include
+                refid="com.framework.emt.system.infrastructure.exception.task.task.mapper.ExceptionTaskMapper.get_week"/>
+        SELECT
+        CONCAT(DATE_FORMAT(generated_dates.start_date, '%Y-%m-%d'), '-', DATE_FORMAT(generated_dates.start_date +
+        INTERVAL 6 DAY, '%Y-%m-%d')) AS date,
+        COUNT(DISTINCT submit.id) AS value
+        FROM (select CASE WHEN #{startDate} BETWEEN start_date AND end_date THEN #{startDate} ELSE start_date END AS
+        start_date,
+        CASE WHEN #{endDate} BETWEEN start_date AND end_date THEN #{endDate} ELSE end_date END AS end_date,
+        '000000' AS tenant_id from generated_dates )as generated_dates
+        LEFT JOIN emt_exception_task_record as record ON record.record_time >= generated_dates.start_date
+        AND record.record_time &lt; DATE_ADD(generated_dates.end_date, INTERVAL 1 DAY)
+        and record.is_deleted = 0
+        <if test="type != null and type =='suspend'">
+            AND record_type = 9
+        </if>
+        LEFT JOIN emt_exception_task as task on task.id=record.exception_task_id and task.is_deleted=0
+        LEFT JOIN emt_exception_task_submit as submit on task.id=submit.exception_task_id and
+        task.submit_version=submit.submit_version
+        and submit.is_deleted=0
+        <if test="deptIds != null  and deptIds.size>0">
+            AND submit.dept_id in
+            <foreach collection="deptIds" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="exceptionCategoryId != null">
+            AND submit.exception_category_id = #{exceptionCategoryId}
+        </if>
+        <if test="exceptionProcessId != null">
+            AND submit.exception_process_id = #{exceptionProcessId}
+        </if>
+        <if test="workspaceLocationId != null">
+            AND submit.workspace_location_id = #{workspaceLocationId}
+        </if>
+        GROUP BY generated_dates.start_date
+        ORDER BY generated_dates.start_date;
+    </select>
+
+    <select id="statisticsMonthTrend"
+            resultType="com.framework.emt.system.domain.statistics.response.StatisticsTrendValueResponse">
+        <include
+                refid="com.framework.emt.system.infrastructure.exception.task.task.mapper.ExceptionTaskMapper.get_month"/>
+        SELECT
+        DATE_FORMAT(generated_dates.start_date, '%Y-%m') as date,
+        CONCAT(DATE_FORMAT(generated_dates.start_date, '%Y-%m-%d'), '-', DATE_FORMAT(generated_dates.last_date,
+        '%Y-%m-%d')) AS date_range,
+        COUNT(DISTINCT submit.id) AS value
+        FROM (select CASE WHEN #{startDate} BETWEEN start_date AND last_date THEN #{startDate} ELSE start_date END AS
+        start_date,
+        CASE WHEN #{endDate} BETWEEN start_date AND last_date THEN #{endDate} ELSE last_date END AS last_date,
+        '000000' AS tenant_id from generated_dates )as generated_dates
+        LEFT JOIN emt_exception_task_record as record ON record.record_time&gt;= generated_dates.start_date
+        AND record.record_time
+        &lt; DATE_ADD(generated_dates.last_date, INTERVAL 1 DAY)
+        and record.is_deleted = 0
+        <if test="type != null and type =='suspend'">
+            AND record_type = 9
+        </if>
+        LEFT JOIN emt_exception_task as task on task.id=record.exception_task_id and task.is_deleted=0
+        LEFT JOIN emt_exception_task_submit as submit on task.id=submit.exception_task_id and
+        task.submit_version=submit.submit_version
+        and submit.is_deleted=0
+        <if test="deptIds != null  and deptIds.size>0">
+            AND submit.dept_id in
+            <foreach collection="deptIds" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="exceptionCategoryId != null">
+            AND submit.exception_category_id = #{exceptionCategoryId}
+        </if>
+        <if test="exceptionProcessId != null">
+            AND submit.exception_process_id = #{exceptionProcessId}
+        </if>
+        <if test="workspaceLocationId != null">
+            AND submit.workspace_location_id = #{workspaceLocationId}
+        </if>
+        GROUP BY generated_dates.start_date
+        ORDER BY generated_dates.start_date;
+    </select>
+
+
+    <select id="statisticsYearTrend"
+            resultType="com.framework.emt.system.domain.statistics.response.StatisticsTrendValueResponse">
+        <include
+                refid="com.framework.emt.system.infrastructure.exception.task.task.mapper.ExceptionTaskMapper.get_year"/>
+        SELECT
+        year as date,
+        CONCAT(DATE_FORMAT(generated_dates.start_date, '%Y-%m-%d'), '-', DATE_FORMAT(generated_dates.end_date,
+        '%Y-%m-%d')) AS date_range,
+        COUNT(DISTINCT submit.id) AS value
+        FROM (select CASE WHEN #{startDate} BETWEEN start_date AND end_date THEN DATE_FORMAT(#{startDate},'%Y-%m-%d')
+        ELSE start_date END AS
+        start_date,
+        CASE WHEN #{endDate} BETWEEN start_date AND end_date THEN DATE_FORMAT(#{endDate},'%Y-%m-%d') ELSE end_date END
+        AS end_date,
+        year,
+        '000000' AS tenant_id from generated_dates )as generated_dates
+        LEFT JOIN emt_exception_task_record as record ON DATE_FORMAT(record.record_time,'%Y-%m-%d') &gt;=
+        generated_dates.start_date
+        AND record.record_time
+        &lt; DATE_FORMAT(DATE_ADD(generated_dates.end_date, INTERVAL 1 DAY),'%Y-%m-%d')
+        and record.is_deleted = 0
+        <if test="type != null and type =='suspend'">
+            AND record_type = 9
+        </if>
+        LEFT JOIN emt_exception_task as task on task.id=record.exception_task_id and task.is_deleted=0
+        LEFT JOIN emt_exception_task_submit as submit on task.id=submit.exception_task_id and
+        task.submit_version=submit.submit_version
+        and submit.is_deleted=0
+        where record.is_deleted=0
+        <if test="deptIds != null  and deptIds.size>0">
+            AND submit.dept_id in
+            <foreach collection="deptIds" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="exceptionCategoryId != null">
+            AND submit.exception_category_id = #{exceptionCategoryId}
+        </if>
+        <if test="exceptionProcessId != null">
+            AND submit.exception_process_id = #{exceptionProcessId}
+        </if>
+        <if test="workspaceLocationId != null">
+            AND submit.workspace_location_id = #{workspaceLocationId}
+        </if>
+        GROUP BY generated_dates.start_date
+        ORDER BY generated_dates.start_date;
+    </select>
+
+    <select id="statisticsDayTimeout"
+            resultType="com.framework.emt.system.domain.statistics.response.StatisticsTrendValueResponse">
+        <include
+                refid="com.framework.emt.system.infrastructure.exception.task.task.mapper.ExceptionTaskMapper.get_day"/>
+        SELECT
+        generated_dates.date AS date,
+        COALESCE(sum(case when record.id is not null and submit.id is not null then 1 else 0 end ),0)
+        AS value
+        FROM generated_dates
+        LEFT JOIN emt_exception_task_record as record ON DATE(record.record_time) = generated_dates.date
+        and record.is_deleted = 0
+        <if test="type != null and type =='response'">
+            AND record_type = 22
+        </if>
+        <if test="type != null and type =='handing'">
+            AND record_type = 24
+        </if>
+        <if test="type != null and type =='cooperation'">
+            AND record_type = 26
+        </if>
+        OR record.id IS NULL
+        LEFT JOIN emt_exception_task as task ON record.exception_task_id=task.id and task.is_deleted=0
+        LEFT JOIN emt_exception_task_submit as submit on task.id=submit.exception_task_id and
+        task.submit_version=submit.submit_version
+        and submit.is_deleted = 0
+        <if test="deptIds != null  and deptIds.size>0">
+            AND submit.dept_id in
+            <foreach collection="deptIds" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="exceptionCategoryId != null">
+            AND submit.exception_category_id = #{exceptionCategoryId}
+        </if>
+        <if test="exceptionProcessId != null">
+            AND submit.exception_process_id = #{exceptionProcessId}
+        </if>
+        <if test="workspaceLocationId != null">
+            AND submit.workspace_location_id = #{workspaceLocationId}
+        </if>
+        GROUP BY generated_dates.date
+        ORDER BY generated_dates.date;
+    </select>
+
+    <select id="statisticsMonthTimeout"
+            resultType="com.framework.emt.system.domain.statistics.response.StatisticsTrendValueResponse">
+        <include
+                refid="com.framework.emt.system.infrastructure.exception.task.task.mapper.ExceptionTaskMapper.get_month"/>
+
+        SELECT
+        DATE_FORMAT(generated_dates.start_date, '%Y-%m') as date,
+        CONCAT(DATE_FORMAT(generated_dates.start_date, '%Y-%m-%d'), '-', DATE_FORMAT(generated_dates.last_date,
+        '%Y-%m-%d')) AS date_range,
+        COALESCE(sum(case when record.id is not null and submit.id is not null then 1 else 0 end ),0)
+        AS value
+        FROM (select CASE WHEN #{startDate} BETWEEN start_date AND last_date THEN #{startDate} ELSE start_date END AS
+        start_date,
+        CASE WHEN #{endDate} BETWEEN start_date AND last_date THEN #{endDate} ELSE last_date END AS last_date,
+        '000000' AS tenant_id from generated_dates )as generated_dates
+        LEFT JOIN emt_exception_task_record as record ON record.record_time&gt; generated_dates.start_date
+        AND record.record_time
+        &lt; DATE_ADD(generated_dates.last_date, INTERVAL 1 DAY)
+        and record.is_deleted = 0
+        <if test="type != null and type =='response'">
+            AND record_type = 22
+        </if>
+        <if test="type != null and type =='handing'">
+            AND record_type = 24
+        </if>
+        <if test="type != null and type =='cooperation'">
+            AND record_type = 26
+        </if>
+        OR record.id IS NULL
+        LEFT JOIN emt_exception_task as task ON record.exception_task_id=task.id and task.is_deleted=0
+        LEFT JOIN emt_exception_task_submit as submit on task.id=submit.exception_task_id and
+        task.submit_version=submit.submit_version
+        and submit.is_deleted = 0
+        <if test="deptIds != null  and deptIds.size>0">
+            AND submit.dept_id in
+            <foreach collection="deptIds" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="exceptionCategoryId != null">
+            AND submit.exception_category_id = #{exceptionCategoryId}
+        </if>
+        <if test="exceptionProcessId != null">
+            AND submit.exception_process_id = #{exceptionProcessId}
+        </if>
+        <if test="workspaceLocationId != null">
+            AND submit.workspace_location_id = #{workspaceLocationId}
+        </if>
+        GROUP BY generated_dates.start_date
+        ORDER BY generated_dates.start_date;
+    </select>
+
+
+    <select id="statisticsWeekTimeout"
+            resultType="com.framework.emt.system.domain.statistics.response.StatisticsTrendValueResponse">
+        <include
+                refid="com.framework.emt.system.infrastructure.exception.task.task.mapper.ExceptionTaskMapper.get_week"/>
+        SELECT
+        CONCAT(DATE_FORMAT(generated_dates.start_date, '%Y-%m-%d'), '-', DATE_FORMAT(generated_dates.start_date +
+        INTERVAL 6 DAY, '%Y-%m-%d')) AS date,
+        COALESCE(sum(case when record.id is not null and submit.id is not null then 1 else 0 end ),0)
+        AS value
+        FROM (select CASE WHEN #{startDate} BETWEEN start_date AND end_date THEN #{startDate} ELSE start_date END AS
+        start_date,
+        CASE WHEN #{endDate} BETWEEN start_date AND end_date THEN #{endDate} ELSE end_date END AS end_date,
+        '000000' AS tenant_id from generated_dates )as generated_dates
+        LEFT JOIN emt_exception_task_record as record ON record.record_time >= generated_dates.start_date
+        AND record.record_time &lt; DATE_ADD(generated_dates.end_date, INTERVAL 1 DAY)
+        and record.is_deleted = 0
+        <if test="type != null and type =='response'">
+            AND record_type = 22
+        </if>
+        <if test="type != null and type =='handing'">
+            AND record_type = 24
+        </if>
+        <if test="type != null and type =='cooperation'">
+            AND record_type = 26
+        </if>
+        OR record.id IS NULL
+        LEFT JOIN emt_exception_task as task ON record.exception_task_id=task.id and task.is_deleted=0
+        LEFT JOIN emt_exception_task_submit as submit on task.id=submit.exception_task_id and
+        task.submit_version=submit.submit_version
+        and submit.is_deleted = 0
+        <if test="deptIds != null and deptIds.size>0">
+            AND submit.dept_id in
+            <foreach collection="deptIds" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="exceptionCategoryId != null">
+            AND submit.exception_category_id = #{exceptionCategoryId}
+        </if>
+        <if test="exceptionProcessId != null">
+            AND submit.exception_process_id = #{exceptionProcessId}
+        </if>
+        <if test="workspaceLocationId != null">
+            AND submit.workspace_location_id = #{workspaceLocationId}
+        </if>
+        GROUP BY generated_dates.start_date
+        ORDER BY generated_dates.start_date;
+    </select>
+</mapper>

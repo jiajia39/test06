@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.framework.emt.system.domain.goods.mapper.GoodsMapper">
+
+    <sql id="get_day">
+        WITH RECURSIVE
+            generated_dates AS (SELECT #{request.endDate} AS date, '000000' as tenant_id
+        UNION ALL
+        SELECT date - INTERVAL 1 DAY, '000000' as tenant_id
+        FROM generated_dates
+        WHERE date >= #{request.startDate}
+          AND generated_dates.date - INTERVAL 1 DAY >= #{request.startDate}
+            )
+    </sql>
+    <select id="listingGoodsNum"
+            resultType="com.framework.emt.system.domain.statistics.response.StatisticsTrendValueResponse">
+        <include refid="get_day"/>
+        SELECT
+        generated_dates.date AS date,
+        COUNT(DISTINCT goods.id)
+        AS value
+        FROM generated_dates
+        LEFT JOIN goods ON DATE(goods.listing_time) = generated_dates.date
+        and goods.is_deleted = 0 and enable_listing=1
+        GROUP BY generated_dates.date
+        ORDER BY generated_dates.date;
+
+    </select>
+</mapper>

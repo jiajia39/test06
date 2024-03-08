@@ -1,0 +1,46 @@
+2024-02-28 11:47:16.360 [main] INFO  com.framework.DevOpsCenterApplicationTest - Starting DevOpsCenterApplicationTest using Java 1.8.0_281 on jiajiagao with PID 14696 (started by gj238 in D:\chushiProject\exception-monitoring-system -goods\devOpsCenter)
+2024-02-28 11:47:16.361 [main] DEBUG com.framework.DevOpsCenterApplicationTest - Running with Spring Boot v2.5.5, Spring v5.3.10
+2024-02-28 11:47:16.361 [main] INFO  com.framework.DevOpsCenterApplicationTest - The following profiles are active: dev
+2024-02-28 11:47:16.372 [background-preinit] INFO  org.hibernate.validator.internal.util.Version - HV000001: Hibernate Validator 6.2.0.Final
+2024-02-28 11:47:17.597 [main] INFO  o.s.d.r.config.RepositoryConfigurationDelegate - Multiple Spring Data modules found, entering strict repository configuration mode!
+2024-02-28 11:47:17.600 [main] INFO  o.s.d.r.config.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2024-02-28 11:47:17.652 [main] INFO  o.s.d.r.config.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 44 ms. Found 0 Redis repository interfaces.
+2024-02-28 11:47:17.865 [main] INFO  o.springframework.cloud.context.scope.GenericScope - BeanFactory id=da633c0a-9b30-353b-b00a-19b12c943e60
+2024-02-28 11:47:18.168 [main] INFO  o.s.c.s.PostProcessorRegistrationDelegate$BeanPostProcessorChecker - Bean 'spring.datasource.dynamic-com.baomidou.dynamic.datasource.spring.boot.autoconfigure.DynamicDataSourceProperties' of type [com.baomidou.dynamic.datasource.spring.boot.autoconfigure.DynamicDataSourceProperties] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
+2024-02-28 11:47:18.178 [main] INFO  o.s.c.s.PostProcessorRegistrationDelegate$BeanPostProcessorChecker - Bean 'com.baomidou.dynamic.datasource.spring.boot.autoconfigure.DynamicDataSourceAutoConfiguration' of type [com.baomidou.dynamic.datasource.spring.boot.autoconfigure.DynamicDataSourceAutoConfiguration$$EnhancerBySpringCGLIB$$38ca0112] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
+2024-02-28 11:47:18.198 [main] INFO  o.s.c.s.PostProcessorRegistrationDelegate$BeanPostProcessorChecker - Bean 'dsProcessor' of type [com.baomidou.dynamic.datasource.processor.DsHeaderProcessor] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
+2024-02-28 11:47:18.863 [main] INFO  com.alibaba.druid.pool.DruidDataSource - {dataSource-1,master} inited
+2024-02-28 11:47:18.863 [main] INFO  c.b.dynamic.datasource.DynamicRoutingDataSource - dynamic-datasource - add a datasource named [master] success
+2024-02-28 11:47:18.863 [main] INFO  c.b.dynamic.datasource.DynamicRoutingDataSource - dynamic-datasource initial loaded [1] datasource,primary datasource named [master]
+2024-02-28 11:47:23.928 [main] INFO  o.s.b.actuate.endpoint.web.EndpointLinksResolver - Exposing 1 endpoint(s) beneath base path '/actuator'
+2024-02-28 11:47:24.218 [main] INFO  org.redisson.Version - Redisson 3.21.1
+2024-02-28 11:47:24.652 [redisson-netty-4-4] INFO  o.r.connection.pool.MasterPubSubConnectionPool - 1 connections initialized for 127.0.0.1/127.0.0.1:6379
+2024-02-28 11:47:24.713 [redisson-netty-4-19] INFO  org.redisson.connection.pool.MasterConnectionPool - 24 connections initialized for 127.0.0.1/127.0.0.1:6379
+2024-02-28 11:47:26.334 [main] INFO  com.framework.DevOpsCenterApplicationTest - Started DevOpsCenterApplicationTest in 10.639 seconds (JVM running for 11.341)
+2024-02-28 11:47:26.820 [SpringApplicationShutdownHook] INFO  c.b.dynamic.datasource.DynamicRoutingDataSource - dynamic-datasource start closing ....
+2024-02-28 11:47:26.822 [SpringApplicationShutdownHook] INFO  com.alibaba.druid.pool.DruidDataSource - {dataSource-1} closing ...
+2024-02-28 11:47:26.830 [SpringApplicationShutdownHook] INFO  com.alibaba.druid.pool.DruidDataSource - {dataSource-1} closed
+2024-02-28 11:47:26.830 [SpringApplicationShutdownHook] INFO  c.b.dynamic.datasource.DynamicRoutingDataSource - dynamic-datasource all closed success,bye
+2024-02-28 13:46:30.728 [main] INFO  com.framework.DevOpsCenterApplicationTest - Starting DevOpsCenterApplicationTest using Java 1.8.0_281 on jiajiagao with PID 32524 (started by gj238 in D:\chushiProject\exception-monitoring-system -goods\devOpsCenter)
+2024-02-28 13:46:30.729 [main] DEBUG com.framework.DevOpsCenterApplicationTest - Running with Spring Boot v2.5.5, Spring v5.3.10
+2024-02-28 13:46:30.729 [main] INFO  com.framework.DevOpsCenterApplicationTest - The following profiles are active: dev
+2024-02-28 13:46:30.740 [background-preinit] INFO  org.hibernate.validator.internal.util.Version - HV000001: Hibernate Validator 6.2.0.Final
+2024-02-28 13:46:32.003 [main] INFO  o.s.d.r.config.RepositoryConfigurationDelegate - Multiple Spring Data modules found, entering strict repository configuration mode!
+2024-02-28 13:46:32.005 [main] INFO  o.s.d.r.config.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2024-02-28 13:46:32.057 [main] INFO  o.s.d.r.config.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 43 ms. Found 0 Redis repository interfaces.
+2024-02-28 13:46:32.284 [main] INFO  o.springframework.cloud.context.scope.GenericScope - BeanFactory id=da633c0a-9b30-353b-b00a-19b12c943e60
+2024-02-28 13:46:32.600 [main] INFO  o.s.c.s.PostProcessorRegistrationDelegate$BeanPostProcessorChecker - Bean 'spring.datasource.dynamic-com.baomidou.dynamic.datasource.spring.boot.autoconfigure.DynamicDataSourceProperties' of type [com.baomidou.dynamic.datasource.spring.boot.autoconfigure.DynamicDataSourceProperties] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
+2024-02-28 13:46:32.609 [main] INFO  o.s.c.s.PostProcessorRegistrationDelegate$BeanPostProcessorChecker - Bean 'com.baomidou.dynamic.datasource.spring.boot.autoconfigure.DynamicDataSourceAutoConfiguration' of type [com.baomidou.dynamic.datasource.spring.boot.autoconfigure.DynamicDataSourceAutoConfiguration$$EnhancerBySpringCGLIB$$38ca0112] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
+2024-02-28 13:46:32.630 [main] INFO  o.s.c.s.PostProcessorRegistrationDelegate$BeanPostProcessorChecker - Bean 'dsProcessor' of type [com.baomidou.dynamic.datasource.processor.DsHeaderProcessor] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
+2024-02-28 13:46:33.278 [main] INFO  com.alibaba.druid.pool.DruidDataSource - {dataSource-1,master} inited
+2024-02-28 13:46:33.279 [main] INFO  c.b.dynamic.datasource.DynamicRoutingDataSource - dynamic-datasource - add a datasource named [master] success
+2024-02-28 13:46:33.279 [main] INFO  c.b.dynamic.datasource.DynamicRoutingDataSource - dynamic-datasource initial loaded [1] datasource,primary datasource named [master]
+2024-02-28 13:46:38.476 [main] INFO  o.s.b.actuate.endpoint.web.EndpointLinksResolver - Exposing 1 endpoint(s) beneath base path '/actuator'
+2024-02-28 13:46:38.677 [main] INFO  org.redisson.Version - Redisson 3.21.1
+2024-02-28 13:46:39.063 [redisson-netty-4-4] INFO  o.r.connection.pool.MasterPubSubConnectionPool - 1 connections initialized for 127.0.0.1/127.0.0.1:6379
+2024-02-28 13:46:39.111 [redisson-netty-4-19] INFO  org.redisson.connection.pool.MasterConnectionPool - 24 connections initialized for 127.0.0.1/127.0.0.1:6379
+2024-02-28 13:46:40.542 [main] INFO  com.framework.DevOpsCenterApplicationTest - Started DevOpsCenterApplicationTest in 10.488 seconds (JVM running for 11.109)
+2024-02-28 13:46:41.019 [SpringApplicationShutdownHook] INFO  c.b.dynamic.datasource.DynamicRoutingDataSource - dynamic-datasource start closing ....
+2024-02-28 13:46:41.021 [SpringApplicationShutdownHook] INFO  com.alibaba.druid.pool.DruidDataSource - {dataSource-1} closing ...
+2024-02-28 13:46:41.029 [SpringApplicationShutdownHook] INFO  com.alibaba.druid.pool.DruidDataSource - {dataSource-1} closed
+2024-02-28 13:46:41.029 [SpringApplicationShutdownHook] INFO  c.b.dynamic.datasource.DynamicRoutingDataSource - dynamic-datasource all closed success,bye

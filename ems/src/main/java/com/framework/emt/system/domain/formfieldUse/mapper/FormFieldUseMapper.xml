@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.framework.emt.system.domain.formfieldUse.mapper.FormFieldUseMapper">
+
+    <resultMap type="com.framework.emt.system.domain.formfieldUse.FormFieldUse" id="FormFieldUseMap">
+        <id property="id" column="id" jdbcType="BIGINT"/>
+        <result property="bizId" column="biz_id" jdbcType="INTEGER"/>
+        <result property="businessType" column="business_type" jdbcType="INTEGER"/>
+        <result property="required" column="required" jdbcType="INTEGER"/>
+        <result property="fieldsCode" column="fields_code" jdbcType="VARCHAR"/>
+        <result property="fieldsVersion" column="fields_version" jdbcType="INTEGER"/>
+        <result property="fieldsValue" column="fields_value" jdbcType="VARCHAR"/>
+        <result property="tenantId" column="tenant_id" jdbcType="VARCHAR"/>
+        <result property="createUser" column="create_user" jdbcType="INTEGER"/>
+        <result property="updateUser" column="update_user" jdbcType="INTEGER"/>
+        <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+        <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
+        <result property="createDept" column="create_dept" jdbcType="INTEGER"/>
+        <result property="isDeleted" column="is_deleted" jdbcType="INTEGER"/>
+    </resultMap>
+
+</mapper>

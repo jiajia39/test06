@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.framework.emt.system.domain.knowledge.mapper.KnowledgeBaseCategoryMapper">
+
+    <select id="pageKnowledgeBaseCategory"
+            resultType="com.framework.emt.system.domain.knowledge.response.KnowledgeBaseCategoryResponse">
+        SELECT
+        ekbc.id,
+        ekbc.title,
+        ekbc.enable_flag,
+        ekbc.sort,
+        ekbc.remark,
+        ekbc.create_user,
+        ekbc.update_user,
+        ekbc.create_time,
+        ekbc.update_time
+        FROM emt_knowledge_base_category ekbc
+        WHERE is_deleted = 0
+        <if test="request.title != null and request.title != ''">
+            AND ekbc.title LIKE CONCAT('%',#{request.title},'%')
+        </if>
+        <if test="request.enableFlag != null">
+            AND ekbc.enable_flag = #{request.enableFlag}
+        </if>
+        ORDER BY ekbc.sort DESC, ekbc.create_time DESC
+    </select>
+
+    <select id="findCategoryAndExistChild"
+            resultType="com.framework.emt.system.domain.knowledge.response.CategoryAndChildResponse">
+        SELECT
+	    ekbc.id,
+	    ekbc.title,
+	    EXISTS ( SELECT 1 FROM emt_knowledge_base ekb
+	    WHERE ekb.is_deleted = 0 AND ekb.knowledge_base_category_id = ekbc.id ) AS has_knowledge_base
+        FROM emt_knowledge_base_category ekbc
+        WHERE ekbc.is_deleted = 0 AND ekbc.enable_flag = 0 AND ekbc.id = #{id}
+    </select>
+
+    <select id="findCategoryCountAndExistChild"
+            resultType="com.framework.emt.system.domain.knowledge.response.CategoryAndChildResponse">
+        SELECT COUNT(1) AS category_count,
+        ( SELECT COUNT(1) FROM emt_knowledge_base ekb
+        WHERE ekb.is_deleted = 0 AND ekb.knowledge_base_category_id = ekbc.id ) AS knowledge_base_count
+        FROM emt_knowledge_base_category ekbc
+        WHERE ekbc.is_deleted = 0 AND ekbc.enable_flag = 0 AND ekbc.id IN
+        <foreach collection="idList" index="index" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
+
+</mapper>

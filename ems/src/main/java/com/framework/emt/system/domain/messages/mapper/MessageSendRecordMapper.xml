@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.framework.emt.system.domain.messages.mapper.MessageSendRecordMapper">
+
+    <select id="getMessageToBeSendById"
+            resultType="com.framework.emt.system.domain.messages.response.MessageToBeSendResponse">
+        SELECT
+        s.id,
+        s.message_id,
+        m.business_type,
+        m.business_id,
+        m.level as message_level,
+        m.message_template_id,
+        m.send_time as message_send_time,
+        m.send_user_id,
+        send.account as send_user_account,
+        m.content,
+        m.receive_user_id,
+        receive.account as receive_user_account,
+        s.send_time,
+        s.send_state
+        FROM
+        emt_message m
+        LEFT JOIN emt_message_send_record s ON m.id = s.message_id AND s.is_deleted = 0
+        LEFT JOIN ft_user receive ON receive.id = m.receive_user_id AND receive.is_deleted = 0
+        LEFT JOIN ft_user send ON send.id = m.send_user_id AND send.is_deleted = 0
+        WHERE
+        m.is_deleted = 0
+        AND m.send_time IS NOT NULL
+        AND m.id = #{id}
+        ORDER BY s.create_time asc
+    </select>
+
+</mapper>

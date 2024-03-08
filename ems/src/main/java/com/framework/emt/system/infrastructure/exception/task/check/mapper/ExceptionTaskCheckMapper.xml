@@ -1,0 +1,418 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.framework.emt.system.infrastructure.exception.task.check.mapper.ExceptionTaskCheckMapper">
+
+    <sql id="task_check_response">
+        task_check.exception_task_id as 'check.exception_task_id',
+        task_check.check_version as 'check.check_version',
+        task_check.user_id as 'check.user_id',
+        task_check.check_status as 'check.check_status',
+        task_check.check_substatus as 'check.check_substatus',
+        task_check.submit_extend_datas as 'check.submit_extend_datas',
+        task_check.submit_time as 'check.submit_time',
+        task_check.reject_reason as 'check.reject_reason',
+        task_check.submit_files as 'check.submit_files',
+    </sql>
+
+    <resultMap id="findExportData"
+               type="com.framework.emt.system.domain.task.check.response.TaskCheckExportResponse"
+               autoMapping="true">
+        <!--提报-->
+        <result property="submitExtendField" column="submit_extend_field"
+                typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+        <result property="responseExtendField" column="response_extend_field"
+                typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+        <result property="handingExtendField" column="handing_extend_field"
+                typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+        <result property="suspendExtendField" column="suspend_extend_field"
+                typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+        <result property="checkExtendField" column="check_extend_field"
+                typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+    </resultMap>
+
+
+    <select id="detail"
+            resultMap="com.framework.emt.system.infrastructure.exception.task.task.mapper.ExceptionTaskMapper.taskResult">
+        SELECT
+        <include
+                refid="com.framework.emt.system.infrastructure.exception.task.task.mapper.ExceptionTaskMapper.task_response"/>
+        <include
+                refid="com.framework.emt.system.infrastructure.exception.task.submit.mapper.ExceptionTaskSubmitMapper.task_submit_response"/>
+        <include
+                refid="com.framework.emt.system.infrastructure.exception.task.handing.mapper.ExceptionTaskHandingMapper.task_handing_response"/>
+        <include refid="task_check_response"/>
+        task_check.id,
+        task_check.create_user,
+        task_check.create_time,
+        task_check.update_user,
+        task_check.update_time
+        FROM
+        emt_exception_task_check task_check
+        INNER JOIN emt_exception_task task ON task.id = task_check.exception_task_id
+        AND task.check_version = task_check.check_version AND task.is_deleted = 0
+        INNER JOIN emt_exception_task_setting setting ON setting.id = task.exception_task_setting_id
+        INNER JOIN emt_exception_task_submit submit ON task.id = submit.exception_task_id
+        AND task.submit_version = submit.submit_version AND submit.is_deleted = 0
+        INNER JOIN emt_exception_task_handing handing ON task.id = handing.exception_task_id
+        AND task.handing_version = handing.handing_version AND handing.is_deleted = 0
+        WHERE task_check.is_deleted = 0
+        <if test="id != null">
+            AND task_check.id = #{id}
+        </if>
+        <if test="userId != null">
+            AND task_check.user_id = #{userId}
+        </if>
+        <if test="version != null">
+            AND task.check_version = #{version}
+        </if>
+    </select>
+
+    <select id="statistics"
+            resultType="com.framework.emt.system.domain.task.check.response.CheckStatusNumResponse">
+        SELECT
+        COUNT(1) AS total_count,
+        COALESCE(SUM(task_check.check_status = 1), 0) AS check_count,
+        COALESCE(SUM(task_check.check_status = 2), 0) AS check_reject_count,
+        COALESCE(SUM(task_check.check_status = 3), 0) AS check_passed_count,
+        COALESCE(SUM(task_check.check_status >=1), 0) AS all_count
+        FROM
+        emt_exception_task_check task_check
+        INNER JOIN
+        emt_exception_task task on task.id = task_check.exception_task_id AND task.check_version =
+        task_check.check_version and task.is_deleted = 0
+        WHERE task_check.is_deleted = 0
+        <if test="userId != null">
+            AND task_check.user_id = #{userId}
+        </if>
+    </select>
+
+    <select id="page"
+            resultMap="com.framework.emt.system.infrastructure.exception.task.task.mapper.ExceptionTaskMapper.taskResult">
+        SELECT
+        <include
+                refid="com.framework.emt.system.infrastructure.exception.task.task.mapper.ExceptionTaskMapper.task_response"/>
+        <include
+                refid="com.framework.emt.system.infrastructure.exception.task.submit.mapper.ExceptionTaskSubmitMapper.task_submit_response"/>
+        <include
+                refid="com.framework.emt.system.infrastructure.exception.task.handing.mapper.ExceptionTaskHandingMapper.task_handing_response"/>
+        <include refid="task_check_response"/>
+        task_check.id,
+        task_check.create_user,
+        task_check.create_time,
+        task_check.update_user,
+        task_check.update_time
+        FROM
+        emt_exception_task_check task_check
+        INNER JOIN emt_exception_task task ON task.id = task_check.exception_task_id
+        AND task.check_version = task_check.check_version AND task.is_deleted = 0
+        INNER JOIN emt_exception_task_setting setting ON setting.id = task.exception_task_setting_id
+        INNER JOIN emt_exception_task_submit submit ON task.id = submit.exception_task_id
+        AND task.submit_version = submit.submit_version AND submit.is_deleted = 0
+        INNER JOIN emt_exception_task_handing handing ON task.id = handing.exception_task_id
+        AND task.handing_version = handing.handing_version AND handing.is_deleted = 0
+        LEFT JOIN emt_exception_item item ON item.id = submit.exception_item_id
+        AND item.is_deleted = 0
+        WHERE task_check.is_deleted = 0
+        <if test="userId != null">
+            AND task_check.user_id = #{userId}
+        </if>
+        <if test="request.code != null and request.code != ''">
+            AND task.id LIKE CONCAT('%',#{request.code},'%')
+        </if>
+        <if test="request.exceptionCategoryId != null">
+            AND submit.exception_category_id = #{request.exceptionCategoryId}
+        </if>
+        <if test="request.exceptionItemId != null">
+            AND submit.exception_item_id = #{request.exceptionItemId}
+        </if>
+        <if test="request.workspaceLocationId != null">
+            AND submit.workspace_location_id = #{request.workspaceLocationId}
+        </if>
+        <if test="request.deptId != null">
+            AND submit.dept_id = #{request.deptId}
+        </if>
+        <if test="request.priority != null">
+            AND submit.priority = #{request.priority}
+        </if>
+        <if test="request.severity != null">
+            AND submit.severity = #{request.severity}
+        </if>
+        <if test="request.checkStatus != null">
+            AND task_check.check_status = #{request.checkStatus}
+        </if>
+        <if test="request.taskStatus != null and request.taskStatus == 12">
+            AND task_check.check_status = 1 and task_check.check_substatus = 11
+        </if>
+        <if test="request.content != null and request.content !=''">
+            AND ( task.id LIKE CONCAT('%',#{request.content},'%') or item.title LIKE CONCAT('%',#{request.content},'%'))
+        </if>
+        <if test="request.taskStatus != null and request.taskStatus == 13">
+            AND (task_check.check_status = 2 or task_check.check_status = 3)
+        </if>
+        <if test="request.taskStatus != null and request.taskStatus == 0">
+            AND task_check.check_status >= 1
+        </if>
+        <if test="request.isTimeOut != null and request.isTimeOut==true">
+            and task_check.check_substatus = 12
+        </if>
+        <if test="request.isTimeOut != null and request.isTimeOut==false">
+            and task_check.check_substatus !=12
+        </if>
+        <if test="request.taskStatusList != null">
+            AND task.task_status in
+            <foreach collection="request.taskStatusList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        group by task.id
+        ORDER BY submit.priority DESC,submit.severity DESC,task_check.create_time DESC
+    </select>
+
+
+    <select id="checkReject"
+            resultType="com.framework.emt.system.domain.statistics.response.StatisticsProportionResponse">
+        select * from (
+        SELECT count(task_check.id) AS count,
+        user.name as name
+        from emt_exception_task_check as task_check
+        LEFT JOIN ft_user as user on user.id =task_check.user_id and user.is_deleted = 0
+        LEFT JOIN emt_exception_task as task on task.id=task_check.exception_task_id and task.is_deleted = 0
+        INNER JOIN emt_exception_task_submit as submit ON task.id = submit.exception_task_id
+        AND task.submit_version = submit.submit_version
+        AND submit.is_deleted = 0
+        WHERE
+        task_check.is_deleted = 0
+        and check_status = 2
+        <if test="request.workspaceLocationId != null ">
+            AND submit.workspace_location_id = #{request.workspaceLocationId}
+        </if>
+        <if test="request.startDate != null and request.endDate !=null">
+            AND task_check.create_time &gt;= #{request.startDate}
+            AND task_check.create_time &lt;= #{request.endDate}
+        </if>
+        <if test="deptIds != null and deptIds.size>0">
+            AND submit.dept_id in
+            <foreach collection="deptIds" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        group by task_check.user_id,user.name
+        )base_date
+        order by count DESC
+        LIMIT 10;
+    </select>
+
+    <select id="findExportDataCount" resultType="java.lang.Long">
+        SELECT
+        count(1)
+        FROM
+        emt_exception_task_check task_check
+        INNER JOIN
+        emt_exception_task task on task.id = task_check.exception_task_id AND task.check_version =
+        task_check.check_version and task.is_deleted = 0
+        INNER JOIN
+        emt_exception_task_submit submit ON task.id = submit.exception_task_id AND task.submit_version =
+        submit.submit_version and submit.is_deleted = 0
+        WHERE task_check.is_deleted = 0
+        <if test="userId != null">
+            AND task_check.user_id = #{userId}
+        </if>
+        <if test="request.code != null and request.code != ''">
+            AND task.id LIKE CONCAT('%',#{request.code},'%')
+        </if>
+        <if test="request.exceptionCategoryId != null">
+            AND submit.exception_category_id = #{request.exceptionCategoryId}
+        </if>
+        <if test="request.exceptionItemId != null">
+            AND submit.exception_item_id = #{request.exceptionItemId}
+        </if>
+        <if test="request.workspaceLocationId != null">
+            AND submit.workspace_location_id = #{request.workspaceLocationId}
+        </if>
+        <if test="request.deptId != null">
+            AND submit.dept_id = #{request.deptId}
+        </if>
+        <if test="request.priority != null">
+            AND submit.priority = #{request.priority}
+        </if>
+        <if test="request.severity != null">
+            AND submit.severity = #{request.severity}
+        </if>
+        <if test="request.checkStatus != null">
+            AND task_check.check_status = #{request.checkStatus}
+        </if>
+        <if test="request.taskStatus != null and request.taskStatus == 12">
+            AND task_check.check_status = 1
+        </if>
+        <if test="request.taskStatus != null and request.taskStatus == 13">
+            AND (task_check.check_status = 2 or task_check.check_status = 3)
+        </if>
+        <if test="request.taskStatus != null and request.taskStatus == 0">
+            AND task_check.check_status >= 1
+        </if>
+        <if test="request.isTimeOut != null and request.isTimeOut==true">
+            and task_check.check_substatus = 12
+        </if>
+        <if test="request.isTimeOut != null and request.isTimeOut==false">
+            and task_check.check_substatus !=12
+        </if>
+        <if test="ids != null and ids.size > 0">
+            AND task_check.id IN
+            <foreach collection="ids" index="index" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+    </select>
+
+    <select id="findExportData"
+            resultMap="findExportData">
+        SELECT
+        task.id AS taskId,
+        task_check.check_status,
+        task_check.check_substatus,
+        submit.priority,
+        submit.severity,
+        submit.exception_category_id AS category_id,
+        submit.exception_item_id AS item_id,
+        submit.workspace_location_id AS workspace_id,
+        (
+        CASE
+        WHEN workspace.parent_id = 0 THEN workspace.title
+        ELSE (
+        select
+        GROUP_CONCAT(title) from (
+        select * from (
+
+        WITH RECURSIVE parent_categories AS (
+        SELECT id, title, parent_id
+        FROM emt_workspace_location
+        WHERE id = submit.workspace_location_id
+
+        UNION ALL
+
+        SELECT ec.id, ec.title, ec.parent_id
+        FROM emt_workspace_location ec
+        INNER JOIN parent_categories pc ON ec.id = pc.parent_id
+        )
+        select * from parent_categories
+        ) as date) title_date)
+        END
+        ) AS workspace_name,
+        submit.dept_id,
+        handing.submit_handing_user_id,
+        submit_handing_user.name AS submit_handing_user_name,
+        submit.submit_extend_datas as submit_extend_field,
+        response.submit_extend_datas as response_extend_field,
+        handing.extend_datas as handing_extend_field,
+        handing.suspend_extend_datas as suspend_extend_field,
+        task_check.submit_extend_datas as check_extend_field,
+        (
+        SELECT IFNULL(
+        GROUP_CONCAT(
+        JSON_UNQUOTE(JSON_EXTRACT(reason_items, CONCAT('$[', idx, '].content')))
+        SEPARATOR '、'
+        ),
+        ''
+        )
+        FROM (SELECT JSON_LENGTH(reason_items) AS len) AS len_tbl
+        JOIN (SELECT 0 AS idx UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 5 UNION ALL
+        SELECT 6) AS indices
+        WHERE idx &lt; len_tbl.len
+        ) AS reason_items,
+        handing.reason_items,
+        task_check.submit_time,
+        handing.submit_time AS handing_submit_time,
+        response.submit_time as response_time,
+        category.title AS category_name,
+        item.title AS item_name,
+        task_check.submit_time AS check_submit_time,
+        check_user.name as check_user_name,
+        submit_user.name as submit_user_name,
+        submit.exception_process_title,
+        task_check.create_user,
+        task_check.create_time,
+        task_check.update_user,
+        task_check.update_time
+        FROM
+        emt_exception_task_check task_check
+        INNER JOIN
+        emt_exception_task task on task.id = task_check.exception_task_id AND task.check_version =
+        task_check.check_version and task.is_deleted = 0
+        INNER JOIN
+        emt_exception_task_submit submit ON task.id = submit.exception_task_id AND task.submit_version =
+        submit.submit_version and submit.is_deleted = 0
+        left JOIN
+        emt_exception_task_response response ON task.id = response.exception_task_id
+        AND task.response_version = response.response_version
+        INNER JOIN
+        emt_exception_task_handing handing ON task.id = handing.exception_task_id AND task.handing_version =
+        handing.handing_version and handing.is_deleted = 0
+        LEFT JOIN
+        emt_workspace_location workspace ON workspace.id = submit.workspace_location_id
+        LEFT JOIN
+        ft_user submit_user ON submit_user.id = submit.user_id AND
+        submit_user.is_deleted = 0
+        LEFT JOIN
+        emt_exception_category category ON category.id = submit.exception_category_id
+        LEFT JOIN
+        emt_exception_item item ON item.id = submit.exception_item_id
+        LEFT JOIN
+        ft_user submit_handing_user ON submit_handing_user.id = handing.submit_handing_user_id AND
+        submit_handing_user.is_deleted = 0
+        LEFT JOIN
+        ft_user check_user ON check_user.id = task_check.user_id AND
+        check_user.is_deleted = 0
+        WHERE task_check.is_deleted = 0
+        <if test="userId != null">
+            AND task_check.user_id = #{userId}
+        </if>
+        <if test="request.code != null and request.code != ''">
+            AND task.id LIKE CONCAT('%',#{request.code},'%')
+        </if>
+        <if test="request.exceptionCategoryId != null">
+            AND submit.exception_category_id = #{request.exceptionCategoryId}
+        </if>
+        <if test="request.exceptionItemId != null">
+            AND submit.exception_item_id = #{request.exceptionItemId}
+        </if>
+        <if test="request.workspaceLocationId != null">
+            AND submit.workspace_location_id = #{request.workspaceLocationId}
+        </if>
+        <if test="request.deptId != null">
+            AND submit.dept_id = #{request.deptId}
+        </if>
+        <if test="request.priority != null">
+            AND submit.priority = #{request.priority}
+        </if>
+        <if test="request.severity != null">
+            AND submit.severity = #{request.severity}
+        </if>
+        <if test="request.checkStatus != null">
+            AND task_check.check_status = #{request.checkStatus}
+        </if>
+        <if test="request.taskStatus != null and request.taskStatus == 12">
+            AND task_check.check_status = 1
+        </if>
+        <if test="request.taskStatus != null and request.taskStatus == 13">
+            AND (task_check.check_status = 2 or task_check.check_status = 3)
+        </if>
+        <if test="request.taskStatus != null and request.taskStatus == 0">
+            AND task_check.check_status >= 1
+        </if>
+        <if test="request.isTimeOut != null and request.isTimeOut==true">
+            and task_check.check_substatus = 12
+        </if>
+        <if test="request.isTimeOut != null and request.isTimeOut==false">
+            and task_check.check_substatus != 12
+        </if>
+        <if test="ids != null and ids.size > 0">
+            AND task_check.id IN
+            <foreach collection="ids" index="index" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+        group by task.id
+        ORDER BY submit.priority DESC,submit.severity DESC,task_check.create_time DESC
+    </select>
+
+</mapper>

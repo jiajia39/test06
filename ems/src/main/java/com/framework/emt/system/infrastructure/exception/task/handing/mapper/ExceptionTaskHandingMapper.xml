@@ -1,0 +1,293 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.framework.emt.system.infrastructure.exception.task.handing.mapper.ExceptionTaskHandingMapper">
+
+    <sql id="task_handing_response">
+        handing
+        .
+        id
+        as 'handing.handing_id',
+        setting.handing_user_ids as 'handing.plan_user_id_list',
+        handing.user_id as 'handing.user_id',
+        handing.other_remark as 'handing.other_remark',
+        handing.other_time as 'handing.other_time',
+        handing.accept_user_id as 'handing.accept_user_id',
+        handing.accept_time as 'handing.accept_time',
+        handing.suspend_time as 'handing.suspend_time',
+        handing.suspend_reason as 'handing.suspend_reason',
+        handing.suspend_num as 'handing.suspend_num',
+        handing.suspend_total_second as 'handing.suspend_total_second',
+        handing.resume_type as 'handing.resume_type',
+        handing.resume_time as 'handing.resume_time',
+        handing.resume_real_time as 'handing.resume_real_time',
+        handing.submit_handing_user_id as 'handing.submit_handing_user_id',
+        handing.reason_analysis as 'handing.reason_analysis',
+        handing.solution as 'handing.solution',
+        handing.result as 'handing.result',
+        handing.reason_items as 'handing.reason_items',
+        handing.extend_datas as 'handing.extend_datas',
+        handing.files as 'handing.files',
+        handing.submit_time as 'handing.submit_time',
+        handing.reject_num as 'handing.reject_num',
+        handing.reject_node as 'handing.reject_node',
+        handing.reject_source_id as 'handing.reject_source_id',
+        handing.reject_time as 'handing.reject_time',
+        handing.reject_reason as 'handing.reject_reason',
+        handing.reject_user_id as 'handing.reject_user_id',
+        handing.suspend_extend_datas as 'handing.suspend_extend_datas',
+        handing.suspend_files as 'handing.suspend_files',
+    </sql>
+
+    <select id="detail"
+            resultMap="com.framework.emt.system.infrastructure.exception.task.task.mapper.ExceptionTaskMapper.taskResult">
+        SELECT
+        <include
+                refid="com.framework.emt.system.infrastructure.exception.task.task.mapper.ExceptionTaskMapper.task_response"/>
+        <include
+                refid="com.framework.emt.system.infrastructure.exception.task.submit.mapper.ExceptionTaskSubmitMapper.task_submit_response"/>
+        <include
+                refid="com.framework.emt.system.infrastructure.exception.task.response.mapper.ExceptionTaskResponseMapper.task_res_response"/>
+        <include refid="task_handing_response"/>
+        handing.id,
+        handing.create_user,
+        handing.create_time,
+        handing.update_user,
+        handing.update_time
+        FROM
+        emt_exception_task task
+        INNER JOIN emt_exception_task_setting setting ON setting.id = task.exception_task_setting_id
+        INNER JOIN emt_exception_task_submit submit ON task.id = submit.exception_task_id
+        AND task.submit_version = submit.submit_version
+        INNER JOIN emt_exception_task_response response ON task.id = response.exception_task_id
+        AND task.response_version = response.response_version and response.is_deleted = 0
+        INNER JOIN emt_exception_task_handing handing ON task.id = handing.exception_task_id
+        AND task.handing_version = handing.handing_version and handing.is_deleted = 0
+        WHERE task.is_deleted = 0
+        <if test="id != null">
+            AND handing.id = #{id}
+        </if>
+    </select>
+
+    <select id="statistics"
+            resultType="com.framework.emt.system.domain.task.handing.response.HandingStatusNumResponse">
+        SELECT
+        COALESCE(SUM(task.task_status = 8)+SUM(task.task_status = 9), 0) AS
+        pre_handing_count,
+        COALESCE(SUM(task.task_status = 10), 0) AS
+        handing_count,
+        (select count(handing.id) from
+        emt_exception_task_handing as handing
+        inner JOIN emt_exception_task as task on task.id=handing.exception_task_id and task.is_deleted = 0 and
+        task.handing_version=handing.handing_version
+        WHERE handing.is_deleted = 0
+        and ((handing.submit_time is not null and
+        handing.submit_time &gt; task.handing_deadline) or
+        (handing.submit_time is null and task.handing_deadline &lt; NOW()))
+        and handing.is_deleted = 0 and
+        task.handing_version=handing.handing_version and task.task_status>7
+        <if test="userId != null">
+            AND handing.user_id = #{userId}
+        </if>)
+        AS is_time_out,
+        COALESCE(SUM(task.task_status > 11), 0) AS finish_count,
+        COALESCE(SUM(task.task_status >= 8), 0) AS all_count
+        FROM
+        emt_exception_task task
+        INNER JOIN emt_exception_task_response response ON task.id = response.exception_task_id
+        AND task.response_version = response.response_version
+        AND response.is_deleted = 0
+        INNER JOIN emt_exception_task_handing handing ON task.id = handing.exception_task_id
+        AND task.handing_version = handing.handing_version
+        AND handing.is_deleted = 0
+        WHERE task.is_deleted = 0
+        <if test="userId != null">
+            AND handing.user_id = #{userId}
+        </if>
+    </select>
+
+    <select id="page"
+            resultMap="com.framework.emt.system.infrastructure.exception.task.task.mapper.ExceptionTaskMapper.taskResult">
+        SELECT
+        <include
+                refid="com.framework.emt.system.infrastructure.exception.task.task.mapper.ExceptionTaskMapper.task_response"/>
+        <include
+                refid="com.framework.emt.system.infrastructure.exception.task.submit.mapper.ExceptionTaskSubmitMapper.task_submit_response"/>
+        <include
+                refid="com.framework.emt.system.infrastructure.exception.task.response.mapper.ExceptionTaskResponseMapper.task_res_response"/>
+        <include refid="task_handing_response"/>
+        handing.id,
+        handing.create_user,
+        handing.create_time,
+        handing.update_user,
+        handing.update_time,
+        IFNULL(TimeStampDiff(SECOND,handing.suspend_time, handing.resume_time),0) AS 'handing.suspend_second'
+        FROM
+        <include refid="handingPageTable"/>
+        <include refid="handingPageQuery"/>
+    </select>
+
+    <sql id="handingPageQuery">
+        <if test="userId != null">
+            AND handing.user_id = #{userId}
+        </if>
+        <if test="request.exceptionCategoryId != null">
+            AND submit.exception_category_id = #{request.exceptionCategoryId}
+        </if>
+        <if test="request.exceptionItemId != null">
+            AND submit.exception_item_id = #{request.exceptionItemId}
+        </if>
+        <if test="request.workspaceLocationId != null">
+            AND submit.workspace_location_id = #{request.workspaceLocationId}
+        </if>
+        <if test="request.deptId != null">
+            AND submit.dept_id = #{request.deptId}
+        </if>
+        <if test="request.code != null and request.code != ''">
+            AND task.id LIKE CONCAT('%',#{request.code},'%')
+        </if>
+        <if test="request.status != null and request.status ==0">
+            AND (task.task_status =8 or task.task_status =9)
+        </if>
+        <if test="request.status != null and request.status ==3">
+            AND task.task_status=10
+        </if>
+        <if test="request.status != null and request.status ==1">
+            AND task.task_status = 11
+        </if>
+        <if test="request.status != null and request.status ==2">
+            AND task.task_status > 11
+        </if>
+        <if test="request.status != null and request.status ==4">
+            AND task.task_status >=8
+        </if>
+        <if test="request.priority != null">
+            AND submit.priority = #{request.priority}
+        </if>
+        <if test="request.severity != null">
+            AND submit.severity = #{request.severity}
+        </if>
+        <if test="request.suspendNum != null">
+            AND handing.suspend_num = #{request.suspendNum}
+        </if>
+        <if test="request.reasonItems != null and request.reasonItems != ''">
+            AND handing.reason_items LIKE CONCAT('%',#{request.reasonItems},'%')
+        </if>
+        <if test="request.content != null and request.content !=''">
+            AND ( task.id LIKE CONCAT('%',#{request.content},'%') or item.title LIKE CONCAT('%',#{request.content},'%'))
+        </if>
+        <if test="request.taskStatus != null">
+            AND task.task_status = #{request.taskStatus}
+        </if>
+        <if test="request.taskStatusList != null">
+            AND task.task_status in
+            <foreach collection="request.taskStatusList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="request.isTimeOut == true or request.status == 5">
+            and ((handing.submit_time is not null and
+            handing.submit_time &gt; task.handing_deadline) or
+            (handing.submit_time is null and task.response_deadline &lt; NOW()))
+        </if>
+        <if test="request.isTimeOut == false">
+            and ((handing.submit_time is not null and
+            handing.submit_time &lt; task.handing_deadline) or
+            (handing.submit_time is null and task.response_deadline &gt; NOW()))
+        </if>
+        <if test="request.suspendNumIsAsc != null">
+            <if test="request.suspendNumIsAsc == true">
+                ORDER BY handing.suspend_num ASC
+            </if>
+            <if test="request.suspendNumIsAsc == false">
+                ORDER BY handing.suspend_num DESC
+            </if>
+        </if>
+        <if test="request.suspendNumIsAsc == null">
+            ORDER BY submit.priority DESC,submit.severity DESC,handing.id DESC
+        </if>
+    </sql>
+
+    <sql id="handingPageTable">
+        emt_exception_task
+        task
+        INNER JOIN emt_exception_task_setting setting ON setting.id = task.exception_task_setting_id
+        INNER JOIN emt_exception_task_submit submit ON task.id = submit.exception_task_id
+        AND task.submit_version = submit.submit_version
+        INNER JOIN emt_exception_task_response response ON task.id = response.exception_task_id
+        AND task.response_version = response.response_version AND response.is_deleted = 0
+        INNER JOIN emt_exception_task_handing handing ON task.id = handing.exception_task_id
+        AND task.handing_version = handing.handing_version AND handing.is_deleted = 0
+        LEFT JOIN emt_exception_item item ON item.id=submit.exception_item_id
+        AND item.is_deleted = 0
+        WHERE task.is_deleted = 0
+    </sql>
+
+    <select id="findExportDataCount" resultType="java.lang.Long">
+        SELECT
+        count(1)
+        FROM
+        <include refid="handingPageTable"/>
+        <if test="ids != null and ids.size > 0">
+            AND handing.id IN
+            <foreach collection="ids" index="index" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+        <include refid="handingPageQuery"/>
+
+    </select>
+    <resultMap id="findExportData"
+               type="com.framework.emt.system.domain.task.handing.response.TaskHandingExportResponse"
+               autoMapping="true">
+        <!--提报-->
+        <result property="submitExtendField" column="submit_extend_field"
+                typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+        <result property="responseExtendField" column="response_extend_field"
+                typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+        <result property="handingExtendField" column="handing_extend_field"
+                typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+        <result property="suspendExtendField" column="suspend_extend_field"
+                typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+    </resultMap>
+    <select id="findExportData"
+            resultMap="findExportData">
+        SELECT
+        task.id AS taskId,
+        task.task_status,
+        task.handing_deadline,
+        submit.priority,
+        submit.severity,
+        submit.dept_id,
+        submit.exception_category_id AS category_id,
+        submit.exception_item_id AS item_id,
+        submit.workspace_location_id AS workspace_id,
+        submit.submit_response_user_id,
+        handing.submit_time as handing_time,
+        submit.exception_process_title,
+        submit.workspace_location_id,
+        response.accept_user_id AS response_user_id,
+        handing.accept_time,
+        response.accept_user_id AS handing_user_id,
+        handing.suspend_num,
+        IFNULL(TimeStampDiff(SECOND,handing.suspend_time, handing.resume_time),0) as suspend_second,
+        submit.submit_extend_datas as submit_extend_field,
+        response.submit_extend_datas as response_extend_field,
+        handing.extend_datas as handing_extend_field,
+        handing.suspend_extend_datas as suspend_extend_field,
+        handing.submit_time,
+        handing.create_user,
+        handing.create_time,
+        handing.update_user,
+        handing.update_time
+        FROM
+        <include refid="handingPageTable"/>
+        <if test="ids != null and ids.size > 0">
+            AND handing.id IN
+            <foreach collection="ids" index="index" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+        <include refid="handingPageQuery"/>
+    </select>
+
+</mapper>

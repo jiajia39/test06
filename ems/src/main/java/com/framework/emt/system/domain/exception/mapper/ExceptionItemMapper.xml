@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.framework.emt.system.domain.exception.mapper.ExceptionItemMapper">
+
+    <select id="detail"
+            resultType="com.framework.emt.system.domain.exception.response.ExceptionItemResponse">
+        SELECT
+        eei.id,
+        eei.exception_category_id,
+        eec.title AS exception_category_name,
+        eec.parent_id_path AS category_parent_id_path,
+        eei.title,
+        eei.enable_flag,
+        eei.priority,
+        eei.severity,
+        eei.response_duration_time,
+        eei.handing_duration_time,
+        eei.sort,
+        eei.remark
+        FROM emt_exception_item eei
+        LEFT JOIN emt_exception_category eec on eec.id = eei.exception_category_id AND eec.is_deleted = 0
+        WHERE eei.is_deleted = 0 AND eei.id = #{itemId}
+    </select>
+
+    <select id="page"
+            resultType="com.framework.emt.system.domain.exception.response.ExceptionItemResponse">
+        SELECT
+        eei.id,
+        eei.exception_category_id,
+        eec.title AS exception_category_name,
+        eec.parent_id_path AS category_parent_id_path,
+        eei.title,
+        eei.enable_flag,
+        eei.priority,
+        eei.severity,
+        eei.response_duration_time,
+        eei.handing_duration_time,
+        eei.sort,
+        eei.remark,
+        eei.create_user,
+        eei.update_user,
+        eei.create_time,
+        eei.update_time
+        FROM emt_exception_item eei
+        LEFT JOIN emt_exception_category eec on eec.id = eei.exception_category_id AND eec.is_deleted = 0
+        WHERE eei.is_deleted = 0
+        <if test="request.title != null and request.title != ''">
+            AND eei.title LIKE CONCAT('%',#{request.title},'%')
+        </if>
+        <if test="request.exceptionCategoryId != null">
+            AND eei.exception_category_id = #{request.exceptionCategoryId}
+        </if>
+        <if test="request.priority != null">
+            AND eei.priority = #{request.priority}
+        </if>
+        <if test="request.severity != null">
+            AND eei.severity = #{request.severity}
+        </if>
+        <if test="request.createUserId != null">
+            AND eei.create_user LIKE CONCAT('%',#{request.createUserId},'%')
+        </if>
+        ORDER BY eei.sort DESC, eei.create_time DESC
+    </select>
+
+    <select id="findExportDataCount" resultType="java.lang.Long">
+        SELECT count(1) FROM emt_exception_item eei WHERE eei.is_deleted = 0
+        <if test="ids.size > 0">
+            AND eei.id IN
+            <foreach collection="ids" index="index" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+    </select>
+
+    <select id="findExportData"
+            resultType="com.framework.emt.system.domain.exception.response.ExceptionItemExportResponse">
+        SELECT
+        eei.id,
+        eei.title,
+        eec.title AS exception_category_name,
+        eei.enable_flag,
+        eei.priority,
+        eei.severity,
+        eei.response_duration_time AS response_duration_time_num,
+        eei.handing_duration_time AS handing_duration_time_num,
+        eei.create_user,
+        eei.update_user,
+        eei.create_time,
+        eei.update_time
+        FROM emt_exception_item eei
+        LEFT JOIN emt_exception_category eec on eec.id = eei.exception_category_id AND eec.is_deleted = 0
+        WHERE eei.is_deleted = 0
+        <if test="request.title != null and request.title != ''">
+            AND eei.title LIKE CONCAT('%',#{request.title},'%')
+        </if>
+        <if test="request.exceptionCategoryId != null">
+            AND eei.exception_category_id = #{request.exceptionCategoryId}
+        </if>
+        <if test="request.enableFlag != null">
+            AND eei.enable_flag = #{request.enableFlag}
+        </if>
+        <if test="request.priority != null">
+            AND eei.priority = #{request.priority}
+        </if>
+        <if test="request.severity != null">
+            AND eei.severity = #{request.severity}
+        </if>
+        <if test="ids.size > 0">
+            AND eei.id IN
+            <foreach collection="ids" index="index" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+        ORDER BY eei.sort DESC, eei.create_time DESC
+    </select>
+
+    <select id="findItemName" resultType="java.lang.String">
+        SELECT
+        title
+        FROM
+        emt_exception_item
+        WHERE is_deleted = 0
+        AND id =
+        (SELECT
+        exception_item_id
+        FROM
+        emt_exception_task_submit
+        WHERE is_deleted = 0
+        AND exception_task_id = #{taskId}
+        AND submit_version = #{submitVersion})
+    </select>
+
+    <select id="listByIds" resultType="com.framework.emt.system.domain.exception.ExceptionItem">
+        SELECT
+        item.id,
+        item.exception_category_id,
+        item.title,
+        item.code,
+        item.priority,
+        item.severity,
+        item.response_duration_time,
+        item.handing_duration_time,
+        item.enable_flag,
+        item.sort,
+        item.remark,
+        item.create_user,
+        item.update_user,
+        item.create_time,
+        item.update_time
+        FROM
+        emt_exception_item item
+        WHERE 1 = 1
+        <if test="ids != null">
+            AND item.id IN
+            <foreach collection="ids" index="index" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+    </select>
+
+    <select id="getByShortList" resultType="com.framework.emt.system.domain.exception.ExceptionItem">
+        SELECT
+        *
+        FROM
+        emt_exception_item item
+        WHERE (item.title,item.exception_category_id) IN
+        <foreach collection="shortList" index="index" item="item" open="(" separator="," close=")">
+            (#{item.title},#{item.categoryId})
+        </foreach>
+        LIMIT 1
+    </select>
+
+</mapper>

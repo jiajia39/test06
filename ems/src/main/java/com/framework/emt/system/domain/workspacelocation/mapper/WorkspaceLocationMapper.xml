@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.framework.emt.system.domain.workspacelocation.mapper.WorkspaceLocationMapper">
+
+    <select id="page"
+            resultType="com.framework.emt.system.domain.workspacelocation.response.WorkspaceLocationResponse">
+        SELECT
+        ewl.id,
+        ewl.parent_id,
+        ewl.parent_id_path,
+        ewl.space_coordinate,
+        EXISTS ( SELECT 1 FROM emt_workspace_location
+        WHERE is_deleted = 0 AND parent_id = ewl.id ) AS has_children,
+        ewl.title,
+        ewl.sort,
+        ewl.remark,
+        ewl.create_user,
+        ewl.update_user,
+        ewl.create_time,
+        ewl.update_time
+        FROM emt_workspace_location ewl
+        WHERE ewl.is_deleted = 0
+        <if test="request.parentId != null">
+            AND ewl.parent_id = #{request.parentId}
+        </if>
+        <if test="request.title != null and request.title != ''">
+            AND ewl.title LIKE CONCAT('%',#{request.title},'%')
+        </if>
+        <if test="request.createUserId != null">
+            AND ewl.create_user LIKE CONCAT('%',#{request.createUserId},'%')
+        </if>
+        ORDER BY ewl.sort DESC, ewl.create_time DESC
+    </select>
+
+    <select id="list"
+            resultType="com.framework.emt.system.domain.workspacelocation.request.WorkspaceLocationTreeResponse">
+        SELECT
+        ewl.id,
+        ewl.parent_id,
+        ewl.title,
+        ewl.sort,
+        ewl.create_time
+        FROM emt_workspace_location ewl
+        WHERE ewl.is_deleted = 0
+        ORDER BY ewl.sort DESC, ewl.create_time DESC
+    </select>
+
+    <select id="findWorkspaceList"
+            resultType="com.framework.emt.system.domain.workspacelocation.WorkspaceLocation">
+        SELECT
+        ewl.id,
+        ewl.title,
+        ewl.parent_id_path
+        FROM emt_workspace_location ewl
+        WHERE is_deleted = 0
+        <if test="ids != null">
+            AND ewl.id IN
+            <foreach collection="ids" index="index" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+        <if test="titles != null">
+            AND ewl.title IN
+            <foreach collection="titles" index="index" item="title" open="(" separator="," close=")">
+                #{title}
+            </foreach>
+        </if>
+    </select>
+
+    <select id="findByTitleParentIdStr"
+            resultType="com.framework.emt.system.domain.workspacelocation.WorkspaceLocation">
+        SELECT
+        ewl.id,
+        ewl.title,
+        ewl.parent_id
+        FROM emt_workspace_location ewl
+        WHERE is_deleted = 0
+        <if test="id != null">
+            AND ewl.id != #{id}
+        </if>
+        <if test="titleParentIdStr != null and titleParentIdStr != ''">
+            AND CONCAT(ewl.title, ewl.parent_id) = #{titleParentIdStr}
+        </if>
+        limit 1
+    </select>
+
+    <select id="findByTitles"
+            resultType="com.framework.emt.system.domain.workspacelocation.response.WorkspaceExportResponse">
+        SELECT
+        ewl.id,
+        ewl.title,
+        IFNULL((SELECT title FROM emt_workspace_location
+        WHERE is_deleted = 0 AND id = ewl.parent_id), "") AS parent_title,
+        ewl.parent_id
+        FROM emt_workspace_location ewl
+        WHERE is_deleted = 0
+        <if test="titles != null">
+            HAVING CONCAT(ewl.title, parent_title) IN
+            <foreach collection="titles" index="index" item="title" open="(" separator="," close=")">
+                #{title}
+            </foreach>
+        </if>
+        limit 1
+    </select>
+
+    <select id="listByIds"
+            resultType="com.framework.emt.system.domain.workspacelocation.response.WorkspaceLocationResponse">
+        SELECT
+        ewl.id,
+        ewl.parent_id,
+        ewl.parent_id_path,
+        ewl.title,
+        (
+        SELECT GROUP_CONCAT(d.title) FROM emt_workspace_location ec
+        LEFT JOIN emt_workspace_location d ON FIND_IN_SET(d.id, ec.parent_id_path) > 0
+        WHERE ec.id = ewl.id
+        ) AS parent_title,
+        ewl.space_coordinate,
+        ewl.code,
+        ewl.enable_flag,
+        ewl.sort,
+        ewl.remark,
+        ewl.create_user,
+        ewl.update_user,
+        ewl.create_time,
+        ewl.update_time
+        FROM
+        emt_workspace_location AS ewl
+        WHERE
+        1 = 1
+        <if test="ids != null">
+            AND ewl.id IN
+            <foreach collection="ids" index="index" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+    </select>
+
+</mapper>

@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.framework.emt.system.domain.reportnoticeprocess.mapper.ReportNoticeProcessUserMapper">
+
+    <select id="detail"
+            resultType="com.framework.emt.system.domain.reportnoticeprocess.response.ReportNoticeProcessResponse">
+        SELECT
+        process_user.id AS report_notice_process_userId,
+        process_user.report_notice_process_id,
+        process_user.time_limit,
+        process_user.receive_user_ids,
+        process_user.sort
+        FROM emt_report_notice_process_user process_user
+        WHERE process_user.id = #{processUserId}
+    </select>
+
+    <select id="page"
+            resultType="com.framework.emt.system.domain.reportnoticeprocess.response.ReportNoticeProcessResponse">
+        SELECT
+        process_user.id AS report_notice_process_userId,
+        process_user.report_notice_process_id,
+        process_user.time_limit,
+        process_user.receive_user_ids,
+        process_user.sort,
+        process_user.create_user,
+        process_user.update_user,
+        process_user.create_time,
+        process_user.update_time
+        FROM emt_report_notice_process_user process_user
+        WHERE process_user.is_deleted = 0
+        AND process_user.report_notice_process_id = #{request.reportNoticeProcessId}
+        ORDER BY process_user.sort DESC, process_user.create_time DESC
+    </select>
+
+    <select id="findByReportNoticeProcessId"
+            resultType="com.framework.emt.system.domain.reportnoticeprocess.response.ReportNoticeProcessResponse">
+        SELECT
+        process_user.id AS report_notice_process_user_id,
+        process.name,
+        process_user.report_notice_process_id,
+        process_user.time_limit,
+        process_user.receive_user_ids
+        FROM
+        emt_report_notice_process_user process_user
+        LEFT JOIN emt_report_notice_process process ON process.id = process_user.report_notice_process_id
+        WHERE process_user.is_deleted = 0
+        AND process_user.report_notice_process_id = #{processId}
+    </select>
+
+</mapper>

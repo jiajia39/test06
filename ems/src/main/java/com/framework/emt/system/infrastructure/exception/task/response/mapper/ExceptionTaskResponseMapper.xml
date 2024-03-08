@@ -1,0 +1,391 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.framework.emt.system.infrastructure.exception.task.response.mapper.ExceptionTaskResponseMapper">
+
+    <sql id="task_res_response">
+        setting.response_user_ids as 'response.plan_user_id_list',
+        response.user_id as 'response.user_id',
+        response.other_remark as 'response.other_remark',
+        response.accept_user_id as 'response.accept_user_id',
+        response.accept_time as 'response.accept_time',
+        response.submit_handing_user_id as 'response.submit_handing_user_id',
+        response.submit_extend_datas as 'response.submit_extend_datas',
+        response.other_time as 'response.other_time',
+        response.submit_time as 'response.submit_time',
+        response.reject_num as 'response.reject_num',
+        response.reject_node as 'response.reject_node',
+        response.reject_source_id as 'response.reject_source_id',
+        response.reject_time as 'response.reject_time',
+        response.reject_reason as 'response.reject_reason',
+        response.reject_user_id as 'response.reject_user_id',
+    </sql>
+
+    <select id="page"
+            resultMap="com.framework.emt.system.infrastructure.exception.task.task.mapper.ExceptionTaskMapper.taskResult">
+        SELECT
+        <include
+                refid="com.framework.emt.system.infrastructure.exception.task.task.mapper.ExceptionTaskMapper.task_response"/>
+        <include
+                refid="com.framework.emt.system.infrastructure.exception.task.submit.mapper.ExceptionTaskSubmitMapper.task_submit_response"/>
+        <include refid="task_res_response"/>
+        response.id,
+        response.create_user,
+        response.create_time,
+        response.update_user,
+        response.update_time
+        FROM
+        emt_exception_task task
+        INNER JOIN emt_exception_task_setting setting ON setting.id = task.exception_task_setting_id
+        INNER JOIN emt_exception_task_submit submit ON task.id = submit.exception_task_id
+        AND task.submit_version = submit.submit_version
+        INNER JOIN emt_exception_task_response response ON task.id = response.exception_task_id
+        AND task.response_version = response.response_version AND response.is_deleted = 0
+        LEFT JOIN emt_exception_item item ON item.id=submit.exception_item_id
+        AND item.is_deleted = 0
+        WHERE task.is_deleted = 0
+        <if test="userId != null">
+            AND response.user_id = #{userId}
+        </if>
+        <if test="request.exceptionCategoryId != null">
+            AND submit.exception_category_id = #{request.exceptionCategoryId}
+        </if>
+        <if test="request.exceptionItemId != null">
+            AND submit.exception_item_id = #{request.exceptionItemId}
+        </if>
+        <if test="request.workspaceLocationId != null">
+            AND submit.workspace_location_id = #{request.workspaceLocationId}
+        </if>
+        <if test="request.deptId != null">
+            AND submit.dept_id = #{request.deptId}
+        </if>
+        <if test="request.code != null and request.code != ''">
+            AND task.id LIKE CONCAT('%',#{request.code},'%')
+        </if>
+        <if test="request.status != null and request.status == 0">
+            AND (( task.task_status = 5) or (task.task_status = 6))
+        </if>
+        <if test="request.status != null and request.status == 1">
+            AND task.task_status = 7
+        </if>
+        <if test="request.status != null and request.status == 2">
+            AND task.task_status >7
+        </if>
+        <if test="request.status != null and request.status == 3">
+            AND task.task_status >=5
+        </if>
+        <if test="request.taskStatus != null">
+            AND task.task_status = #{request.taskStatus }
+        </if>
+        <if test="request.priority != null">
+            AND submit.priority = #{request.priority}
+        </if>
+        <if test="request.severity != null">
+            AND submit.severity = #{request.severity}
+        </if>
+        <if test="request.content != null and request.content !=''">
+            AND ( task.id LIKE CONCAT('%',#{request.content},'%') or item.title LIKE CONCAT('%',#{request.content},'%'))
+        </if>
+        <if test="request.taskStatusList != null">
+            AND task.task_status in
+            <foreach collection="request.taskStatusList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="(request.expire != null and request.expire==true) or request.status == 4">
+            AND ((response.submit_time IS NOT NULL
+            AND
+            response.submit_time &gt; task.response_deadline) OR
+            (response.submit_time IS NULL AND task.response_deadline &lt; NOW()))
+        </if>
+        <if test="request.expire != null and request.expire==false">
+            AND ((response.submit_time IS NOT NULL
+            AND
+            response.submit_time &lt; task.response_deadline) OR
+            (response.submit_time IS NULL AND task.response_deadline &gt; NOW()))
+        </if>
+        ORDER BY submit.priority DESC,submit.severity DESC,response.create_time DESC
+    </select>
+
+    <select id="detail"
+            resultMap="com.framework.emt.system.infrastructure.exception.task.task.mapper.ExceptionTaskMapper.taskResult">
+        SELECT
+        <include
+                refid="com.framework.emt.system.infrastructure.exception.task.task.mapper.ExceptionTaskMapper.task_response"/>
+        <include
+                refid="com.framework.emt.system.infrastructure.exception.task.submit.mapper.ExceptionTaskSubmitMapper.task_submit_response"/>
+        <include refid="task_res_response"/>
+        response.id,
+        response.create_user,
+        response.create_time,
+        response.update_user,
+        response.update_time
+        FROM
+        emt_exception_task task
+        INNER JOIN emt_exception_task_setting setting ON setting.id = task.exception_task_setting_id
+        INNER JOIN emt_exception_task_submit submit ON task.id = submit.exception_task_id
+        AND task.submit_version = submit.submit_version
+        INNER JOIN emt_exception_task_response response ON task.id = response.exception_task_id
+        AND task.response_version = response.response_version and response.is_deleted = 0
+        WHERE task.is_deleted = 0
+        AND response.id = #{id}
+        <if test="userId != null">
+            AND response.user_id = #{userId}
+        </if>
+    </select>
+
+    <select id="statistics"
+            resultType="com.framework.emt.system.domain.task.response.response.ResponseStatusNumResponse">
+        SELECT
+        COALESCE(SUM(task.task_status = 5)+SUM(task.task_status = 6), 0) AS pre_response_count,
+        COALESCE(SUM(task.task_status = 7), 0) AS responding_count,
+        (select count(response.id) from
+        emt_exception_task task
+        INNER JOIN emt_exception_task_response response ON task.id = response.exception_task_id
+        AND task.response_version = response.response_version AND response.is_deleted = 0
+        WHERE task.is_deleted = 0
+        AND task.task_status >= 5
+        and ((response.submit_time is not null and
+        response.submit_time &gt; task.response_deadline) or
+        (response.submit_time is null and task.response_deadline &lt; NOW()))
+        and response.is_deleted = 0 and
+        task.response_version=response.response_version
+        <if test="userId != null">
+            AND response.user_id = #{userId}
+        </if>)
+        AS is_time_out,
+        COALESCE(SUM(task.task_status > 7), 0) AS responded_count,
+        COALESCE(SUM(task.task_status >= 5), 0) AS all_count
+        FROM
+        emt_exception_task task
+        INNER JOIN emt_exception_task_submit submit ON task.id = submit.exception_task_id
+        AND task.submit_version = submit.submit_version
+        INNER JOIN emt_exception_task_response response ON task.id = response.exception_task_id
+        AND task.response_version = response.response_version AND response.is_deleted = 0
+        WHERE task.is_deleted = 0
+        <if test="userId != null">
+            AND response.user_id = #{userId}
+        </if>
+    </select>
+
+    <select id="findExportDataCount" resultType="java.lang.Long">
+        SELECT
+        count(1)
+        FROM
+        emt_exception_task task
+        INNER JOIN
+        emt_exception_task_submit submit ON task.id = submit.exception_task_id AND task.submit_version =
+        submit.submit_version
+        INNER JOIN
+        emt_exception_task_response response ON task.id = response.exception_task_id AND task.response_version =
+        response.response_version and response.is_deleted = 0
+        WHERE task.is_deleted = 0
+        <if test="userId != null">
+            AND response.user_id = #{userId}
+        </if>
+        <if test="request.exceptionCategoryId != null">
+            AND submit.exception_category_id = #{request.exceptionCategoryId}
+        </if>
+        <if test="request.exceptionItemId != null">
+            AND submit.exception_item_id = #{request.exceptionItemId}
+        </if>
+        <if test="request.workspaceLocationId != null">
+            AND submit.workspace_location_id = #{request.workspaceLocationId}
+        </if>
+        <if test="request.deptId != null">
+            AND submit.dept_id = #{request.deptId}
+        </if>
+        <if test="request.code != null and request.code != ''">
+            AND task.id LIKE CONCAT('%',#{request.code},'%')
+        </if>
+        <if test="request.status != null and request.status == 0">
+            AND (( task.task_status = 5) or (task.task_status = 6))
+        </if>
+        <if test="request.status != null and request.status == 1">
+            AND task.task_status = 7
+        </if>
+        <if test="request.status != null and request.status == 2">
+            AND task.task_status > 7
+        </if>
+        <if test="request.status != null and request.status == 3">
+            AND task.task_status >=5
+        </if>
+        <if test="request.taskStatus != null">
+            AND task.task_status = #{request.taskStatus}
+        </if>
+        <if test="request.priority != null">
+            AND submit.priority = #{request.priority}
+        </if>
+        <if test="request.severity != null">
+            AND submit.severity = #{request.severity}
+        </if>
+        <if test="request.expire != null and request.expire==true">
+            AND ((response.submit_time IS NOT NULL
+            AND
+            response.submit_time &gt; task.response_deadline) OR
+            (response.submit_time IS NULL AND task.response_deadline &lt; NOW()))
+        </if>
+        <if test="request.expire != null and request.expire==false">
+            AND ((response.submit_time IS NOT NULL
+            AND
+            response.submit_time &lt; task.response_deadline) OR
+            (response.submit_time IS NULL AND task.response_deadline &gt; NOW()))
+        </if>
+        <if test="ids != null and ids.size > 0">
+            AND response.id IN
+            <foreach collection="ids" index="index" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+    </select>
+
+    <resultMap id="findExportData"
+               type="com.framework.emt.system.domain.task.response.response.TaskResponseExportResponse"
+               autoMapping="true">
+        <!--提报-->
+        <result property="submitExtendField" column="submit_extend_field"
+                typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+        <result property="responseExtendField" column="response_extend_field"
+                typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+    </resultMap>
+    <select id="findExportData"
+            resultMap="findExportData">
+        SELECT
+        task.id AS taskId,
+        task.task_status,
+        submit.priority,
+        submit.severity,
+        submit.exception_process_title,
+        submit_use.name as sub_submit_user_name,
+        submit.submit_time as sub_submit_time,
+        task.response_deadline,
+        task.handing_deadline,
+        response.submit_time as response_time,
+        category.title AS category_name,
+        response_user.name as response_user_name,
+        submit.dept_id,
+        submit.exception_category_id AS category_id,
+        category.title AS category_name,
+        submit.exception_item_id AS item_id,
+        item.title AS item_name,
+        submit.workspace_location_id AS workspace_id,
+        (
+        CASE
+        WHEN workspace.parent_id = 0 THEN workspace.title
+        ELSE (
+
+        select
+        GROUP_CONCAT(title) from (
+        select * from (
+
+        WITH RECURSIVE parent_categories AS (
+        SELECT id, title, parent_id
+        FROM emt_workspace_location
+        WHERE id = submit.workspace_location_id
+
+        UNION ALL
+
+        SELECT ec.id, ec.title, ec.parent_id
+        FROM emt_workspace_location ec
+        INNER JOIN parent_categories pc ON ec.id = pc.parent_id
+        )
+        select * from parent_categories
+        ) as date) title_date)
+        END
+        ) AS workspace_name,
+        response.accept_time,
+        response.submit_time,
+        response.submit_handing_user_id,
+        submit_handing_user.name AS submit_handing_user_name,
+        submit.submit_extend_datas as submit_extend_field,
+        response.submit_extend_datas as response_extend_field,
+        response.create_user,
+        response.create_time,
+        response.update_user,
+        response.update_time
+        FROM
+        emt_exception_task task
+        INNER JOIN
+        emt_exception_task_submit submit ON task.id = submit.exception_task_id AND task.submit_version =
+        submit.submit_version
+        INNER JOIN
+        emt_exception_task_response response ON task.id = response.exception_task_id AND task.response_version =
+        response.response_version and response.is_deleted = 0
+        LEFT JOIN
+        ft_user response_user ON response_user.id = response.user_id AND
+        response_user.is_deleted = 0
+        LEFT JOIN
+        ft_user submit_use ON submit.submit_user_id = response.user_id AND
+        response_user.is_deleted = 0
+
+        LEFT JOIN
+        ft_user submit_handing_user ON submit_handing_user.id = response.submit_handing_user_id AND
+        submit_handing_user.is_deleted = 0 and submit_handing_user.is_deleted = 0
+        LEFT JOIN
+        emt_exception_category category ON category.id = submit.exception_category_id
+        LEFT JOIN
+        emt_workspace_location workspace ON workspace.id = submit.workspace_location_id
+        LEFT JOIN
+        emt_exception_item item ON item.id = submit.exception_item_id
+        WHERE task.is_deleted = 0
+        <if test="userId != null">
+            AND response.user_id = #{userId}
+        </if>
+        <if test="request.exceptionCategoryId != null">
+            AND submit.exception_category_id = #{request.exceptionCategoryId}
+        </if>
+        <if test="request.exceptionItemId != null">
+            AND submit.exception_item_id = #{request.exceptionItemId}
+        </if>
+        <if test="request.workspaceLocationId != null">
+            AND submit.workspace_location_id = #{request.workspaceLocationId}
+        </if>
+        <if test="request.deptId != null">
+            AND submit.dept_id = #{request.deptId}
+        </if>
+        <if test="request.code != null and request.code != ''">
+            AND task.id LIKE CONCAT('%',#{request.code},'%')
+        </if>
+        <if test="request.status != null and request.status == 0">
+            AND (( task.task_status = 5) or (task.task_status = 6))
+        </if>
+        <if test="request.status != null and request.status == 1">
+            AND task.task_status = 7
+        </if>
+        <if test="request.status != null and request.status == 2">
+            AND task.task_status >7
+        </if>
+        <if test="request.status != null and request.status == 3">
+            AND task.task_status >=5
+        </if>
+        <if test="request.taskStatus != null">
+            AND task.task_status = #{request.taskStatus }
+        </if>
+        <if test="request.priority != null">
+            AND submit.priority = #{request.priority}
+        </if>
+        <if test="request.severity != null">
+            AND submit.severity = #{request.severity}
+        </if>
+        <if test="request.expire != null and request.expire==true">
+            AND ((response.submit_time IS NOT NULL
+            AND
+            response.submit_time &gt; task.response_deadline) OR
+            (response.submit_time IS NULL AND task.response_deadline &lt; NOW()))
+        </if>
+        <if test="request.expire != null and request.expire==false">
+            AND ((response.submit_time IS NOT NULL
+            AND
+            response.submit_time &lt; task.response_deadline) OR
+            (response.submit_time IS NULL AND task.response_deadline &gt; NOW()))
+        </if>
+        <if test="ids != null and ids.size > 0">
+            AND response.id IN
+            <foreach collection="ids" index="index" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+        group by task.id
+        ORDER BY submit.priority DESC,submit.severity DESC,response.create_time DESC
+    </select>
+
+</mapper>

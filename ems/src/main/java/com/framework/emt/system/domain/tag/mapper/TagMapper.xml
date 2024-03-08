@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.framework.emt.system.domain.tag.mapper.TagMapper">
+
+    <select id="findTagListBySourceId" resultType="com.framework.emt.system.domain.tag.response.TagInfo">
+        SELECT id, content
+        FROM `emt_tag`
+        WHERE is_deleted = 0
+        AND id IN
+        (SELECT tag_id
+        FROM `emt_tag_exception`
+        WHERE is_deleted = 0
+        AND source_type = #{sourceTypeCode}
+        AND source_id = #{sourceId})
+    </select>
+
+
+    <select id="exceptionReasonTop"
+            resultType="com.framework.emt.system.domain.statistics.response.StatisticsProportionResponse">
+        select * from ( SELECT
+        tag.content as name,
+        COUNT(*) AS count
+        FROM
+        emt_tag as tag
+        JOIN emt_exception_task_handing as handing ON JSON_CONTAINS (
+        handing.reason_items -> '$[*].id',
+        CAST(tag.id AS CHAR),
+        '$'
+        ) and handing.is_deleted=0
+        INNER JOIN emt_exception_task as task on
+        handing.exception_task_id = task.id
+        AND task.handing_version = handing.handing_version and task.is_deleted=0
+        left JOIN emt_exception_task_submit as submit ON task.id = submit.exception_task_id
+        AND task.submit_version = submit.submit_version and submit.is_deleted=0
+        where tag.type = 1
+        <if test="request.startDate != null and request.endDate !=null">
+            AND handing.create_time &gt;= #{request.startDate}
+            AND handing.create_time &lt;= #{request.endDate}
+        </if>
+        <if test="request.workspaceLocationId != null ">
+            AND submit.workspace_location_id = #{request.workspaceLocationId}
+        </if>
+        <if test="request.exceptionCategoryId != null">
+            AND submit.exception_category_id = #{request.exceptionCategoryId}
+        </if>
+        <if test="request.exceptionItemId != null">
+            AND submit.exception_item_id = #{request.exceptionItemId}
+        </if>
+        <if test="request.taskStatus != null">
+            AND task.task_status = #{request.taskStatus}
+        </if>
+        <if test="deptIds != null and deptIds.size>0">
+            AND submit.dept_id in
+            <foreach collection="deptIds" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        GROUP BY tag.id limit 10 ) base_date order by count desc ;
+
+    </select>
+</mapper>

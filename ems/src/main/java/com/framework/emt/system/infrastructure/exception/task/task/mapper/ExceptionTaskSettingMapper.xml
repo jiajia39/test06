@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.framework.emt.system.infrastructure.exception.task.task.mapper.ExceptionTaskSettingMapper">
+
+    <resultMap id="detailResultMap"
+               type="com.framework.emt.system.domain.task.task.response.TaskSettingResponse"
+               autoMapping="true">
+        <result property="handingUserIdList" column="handing_user_ids"
+                typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+    </resultMap>
+
+    <resultMap id="checkResult"
+               type="com.framework.emt.system.domain.task.task.response.SettingCheckResponse"
+               autoMapping="true">
+        <result property="checkUserIds" column="check_user_ids"
+                typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+    </resultMap>
+
+    <resultMap id="handingResult"
+               type="com.framework.emt.system.domain.task.task.response.SettingHandingResponse"
+               autoMapping="true">
+        <result property="handingUserIds" column="handing_user_ids"
+                typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+    </resultMap>
+
+    <select id="getTaskById" resultMap="detailResultMap">
+        select * from emt_exception_task_setting where is_deleted=0 and id=#{id}
+    </select>
+
+    <select id="findCheckDataById" resultMap="checkResult">
+        SELECT
+        eets.id,
+        eets.check_mode,
+        eets.check_user_ids
+        FROM
+        emt_exception_task_setting eets
+        WHERE
+        eets.is_deleted = 0 AND eets.id = #{id}
+    </select>
+
+    <select id="findCheckHandingById" resultMap="handingResult">
+        SELECT
+        eets.id,
+        eets.handing_mode,
+        eets.handing_user_ids
+        FROM
+        emt_exception_task_setting eets
+        WHERE
+        eets.is_deleted = 0 AND eets.id = #{id}
+    </select>
+
+    <select id="findByTaskId"
+            resultType="com.framework.emt.system.infrastructure.exception.task.task.ExceptionTaskSetting">
+        SELECT
+        response_report_notice_process_id,
+        response_report_notice_process_name,
+        handing_report_notice_process_id,
+        handing_report_notice_process_name
+        FROM
+        emt_exception_task_setting
+        WHERE
+        is_deleted = 0
+        AND id = (SELECT exception_task_setting_id
+        FROM emt_exception_task
+        WHERE is_deleted = 0 AND id = #{taskId})
+    </select>
+
+</mapper>

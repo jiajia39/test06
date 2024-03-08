@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.framework.emt.system.domain.reportnoticeprocess.mapper.ReportNoticeProcessMapper">
+
+    <select id="detail"
+            resultType="com.framework.emt.system.domain.reportnoticeprocess.response.ReportNoticeProcessResponse">
+        SELECT
+        ernp.id AS report_notice_processId,
+        ernp.exception_category_id,
+        eec.title AS exception_category_name,
+        ernp.name,
+        ernp.enable_flag
+        FROM emt_report_notice_process ernp
+        LEFT JOIN emt_exception_category eec ON eec.id = ernp.exception_category_id AND eec.is_deleted = 0
+        WHERE ernp.is_deleted = 0 AND ernp.id = #{processId}
+    </select>
+
+    <select id="page"
+            resultType="com.framework.emt.system.domain.reportnoticeprocess.response.ReportNoticeProcessResponse">
+        SELECT
+        ernp.id AS report_notice_processId,
+        ernp.exception_category_id,
+        eec.title AS exception_category_name,
+        ernp.name,
+        (SELECT COUNT(1) FROM emt_report_notice_process_user ernpu
+        WHERE ernpu.report_notice_process_id = ernp.id AND ernpu.is_deleted = 0) AS report_level,
+        (SELECT IFNULL(GROUP_CONCAT(ernpu.receive_user_ids), "") FROM emt_report_notice_process_user ernpu
+        WHERE ernpu.report_notice_process_id = ernp.id AND ernpu.is_deleted = 0) AS receive_user_ids,
+        ernp.enable_flag,
+        ernp.sort,
+        ernp.create_user,
+        ernp.update_user,
+        ernp.create_time,
+        ernp.update_time
+        FROM emt_report_notice_process ernp
+        LEFT JOIN emt_exception_category eec ON eec.id = ernp.exception_category_id AND eec.is_deleted = 0
+        WHERE ernp.is_deleted = 0
+        <if test="request.name != null and request.name != ''">
+            AND ernp.name LIKE CONCAT('%',#{request.name},'%')
+        </if>
+        <if test="request.exceptionCategoryId != null">
+            AND ernp.exception_category_id = #{request.exceptionCategoryId}
+        </if>
+        <if test="request.enableFlag != null">
+            AND ernp.enable_flag = #{request.enableFlag}
+        </if>
+        <if test="request.createUserId != null">
+            AND ernp.create_user LIKE CONCAT('%',#{request.createUserId},'%')
+        </if>
+        ORDER BY ernp.sort ASC, ernp.create_time DESC
+    </select>
+
+    <select id="findReportAndExistChild"
+            resultType="com.framework.emt.system.domain.reportnoticeprocess.response.ReportAndChildResponse">
+        SELECT
+	    ernp.id,
+	    ernp.name,
+	    EXISTS ( SELECT 1 FROM emt_exception_process eep
+	    WHERE eep.is_deleted = 0
+	    AND eep.response_report_notice_process_id = ernp.id
+	    OR eep.handing_report_notice_process_id = ernp.id ) AS has_children
+        FROM emt_report_notice_process ernp
+        WHERE ernp.is_deleted = 0 AND ernp.enable_flag = 0 AND ernp.id = #{processId}
+    </select>
+
+    <select id="findReportCountAndExistChild"
+            resultType="com.framework.emt.system.domain.reportnoticeprocess.response.ReportAndChildResponse">
+        SELECT COUNT(1) AS report_count,
+        ( SELECT COUNT(1) FROM emt_exception_process eep
+        WHERE eep.is_deleted = 0
+        AND eep.response_report_notice_process_id = ernp.id
+        OR eep.handing_report_notice_process_id = ernp.id ) AS exception_process_count
+        FROM emt_report_notice_process ernp
+        WHERE ernp.is_deleted = 0 AND ernp.enable_flag = 0 AND ernp.id IN
+        <foreach collection="idList" index="index" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
+
+</mapper>

@@ -1,0 +1,373 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.framework.emt.system.infrastructure.exception.task.cooperation.mapper.ExceptionTaskCooperationMapper">
+
+    <sql id="task_cooperation_response">
+        cooperation
+        .
+        cooperation_status
+        as 'cooperation.cooperation_status',
+        cooperation.cooperation_sub_status as 'cooperation.cooperation_sub_status',
+        cooperation.title as 'cooperation.title',
+        cooperation.report_notice_process_id as 'cooperation.report_notice_process_id',
+        cooperation.report_notice_process_name as 'cooperation.report_notice_process_name',
+        cooperation.duration_time as 'cooperation.duration_time',
+        cooperation.finish_deadline as 'cooperation.finish_deadline',
+        cooperation.plan_user_id as 'cooperation.plan_user_id',
+        cooperation.user_id as 'cooperation.user_id',
+        cooperation.other_remark as 'cooperation.other_remark',
+        cooperation.other_time as 'cooperation.other_time',
+        cooperation.accept_user_id as 'cooperation.accept_user_id',
+        cooperation.accept_time as 'cooperation.accept_time',
+        cooperation.submit_reason_analysis as 'cooperation.submit_reason_analysis',
+        cooperation.submit_solution as 'cooperation.submit_solution',
+        cooperation.submit_result as 'cooperation.submit_result',
+        cooperation.submit_files as 'cooperation.submit_files',
+        cooperation.submit_extend_datas as 'cooperation.submit_extend_datas',
+        cooperation.submit_time as 'cooperation.submit_time',
+        cooperation.create_time as 'cooperation.create_time',
+    </sql>
+
+    <select id="statisticsStatus"
+            resultType="com.framework.emt.system.domain.task.cooperation.response.CooperationStatusNumResponse">
+        SELECT
+        COUNT(1) AS total_count,
+        COALESCE(SUM(cooperation_status = 1), 0) AS cooperation_wait_count,
+        COALESCE(SUM(cooperation_status = 2), 0) AS revoked_count,
+        COALESCE(SUM(cooperation_status = 3), 0) AS cooperation_ing_count,
+        COALESCE(SUM(cooperation_status = 4), 0) AS completed_count,
+        COALESCE(SUM(cooperation_status = 4)+SUM(cooperation_status = 1)+SUM(cooperation_status = 3), 0) AS all_count,
+        COALESCE(SUM(IFNULL(submit_time, NOW()) &gt; finish_deadline), 0) AS timed_out_count
+        FROM
+        emt_exception_task_cooperation cooperation
+        INNER JOIN emt_exception_task task ON task.id = cooperation.exception_task_id AND cooperation.handing_version =
+        task.handing_version
+        WHERE cooperation.is_deleted = 0
+        <if test="currentUserId != null">
+            AND cooperation.user_id = #{currentUserId}
+        </if>
+    </select>
+
+    <select id="detail"
+            resultMap="com.framework.emt.system.infrastructure.exception.task.task.mapper.ExceptionTaskMapper.taskResult">
+        SELECT
+        <include refid="task_cooperation_response"/>
+        <include
+                refid="com.framework.emt.system.infrastructure.exception.task.task.mapper.ExceptionTaskMapper.task_response"/>
+        <include
+                refid="com.framework.emt.system.infrastructure.exception.task.handing.mapper.ExceptionTaskHandingMapper.task_handing_response"/>
+        <include
+                refid="com.framework.emt.system.infrastructure.exception.task.submit.mapper.ExceptionTaskSubmitMapper.task_submit_response"/>
+        cooperation.id,
+        cooperation.create_time,
+        cooperation.update_time,
+        cooperation.create_user,
+        cooperation.update_user
+        FROM
+        emt_exception_task_cooperation cooperation
+        INNER JOIN emt_exception_task task ON task.id = cooperation.exception_task_id
+        AND task.handing_version = cooperation.handing_version AND task.is_deleted = 0
+        INNER JOIN emt_exception_task_setting setting ON setting.id = task.exception_task_setting_id
+        INNER JOIN emt_exception_task_submit submit ON submit.exception_task_id = task.id
+        AND submit.submit_version = task.submit_version
+        INNER JOIN emt_exception_task_handing handing ON handing.exception_task_id = task.id
+        AND handing.handing_version = task.handing_version
+        WHERE cooperation.is_deleted = 0
+        AND cooperation.id = #{id}
+        <if test="version != null">
+            AND task.handing_version = #{version}
+        </if>
+    </select>
+
+    <select id="page"
+            resultMap="com.framework.emt.system.infrastructure.exception.task.task.mapper.ExceptionTaskMapper.taskResult">
+        SELECT
+        <include refid="task_cooperation_response"/>
+        <include
+                refid="com.framework.emt.system.infrastructure.exception.task.task.mapper.ExceptionTaskMapper.task_response"/>
+        <include
+                refid="com.framework.emt.system.infrastructure.exception.task.handing.mapper.ExceptionTaskHandingMapper.task_handing_response"/>
+        <include
+                refid="com.framework.emt.system.infrastructure.exception.task.submit.mapper.ExceptionTaskSubmitMapper.task_submit_response"/>
+        cooperation.id,
+        cooperation.create_time,
+        cooperation.update_time,
+        cooperation.create_user,
+        cooperation.update_user
+        FROM
+        emt_exception_task_cooperation cooperation
+        INNER JOIN emt_exception_task task ON task.id = cooperation.exception_task_id
+        AND task.handing_version = cooperation.handing_version AND task.is_deleted = 0
+        INNER JOIN emt_exception_task_setting setting ON setting.id = task.exception_task_setting_id
+        INNER JOIN emt_exception_task_submit submit ON submit.exception_task_id = task.id
+        AND submit.submit_version = task.submit_version
+        INNER JOIN emt_exception_task_handing handing ON handing.exception_task_id = task.id
+        AND handing.handing_version = task.handing_version
+        LEFT JOIN emt_exception_item item ON item.id=submit.exception_item_id
+        AND item.is_deleted=0
+        WHERE cooperation.is_deleted = 0
+        <if test="userId != null">
+            AND cooperation.user_id = #{userId}
+        </if>
+        <if test="request.code != null and request.code != ''">
+            AND cooperation.id LIKE CONCAT('%',#{request.code},'%')
+        </if>
+        <if test="request.title != null and request.title != ''">
+            AND cooperation.title LIKE CONCAT('%',#{request.title},'%')
+        </if>
+        <if test="request.status != null  and request.status !=5">
+            AND cooperation.cooperation_status = #{request.status}
+        </if>
+        <if test="request.status != null and request.status ==5">
+            AND cooperation.cooperation_status in(1,3,4)
+        </if>
+        <if test="request.cooperationStatus != null">
+            AND cooperation.cooperation_status = #{request.cooperationStatus}
+        </if>
+        <if test="request.cooperationSubStatus != null">
+            AND cooperation.cooperation_sub_status = #{request.cooperationSubStatus}
+        </if>
+        <if test="request.exceptionCode != null and request.exceptionCode != ''">
+            AND task.id LIKE CONCAT('%',#{request.exceptionCode},'%')
+        </if>
+        <if test="request.content != null and request.content !=''">
+            AND ( task.id LIKE CONCAT('%',#{request.content},'%') or item.title LIKE CONCAT('%',#{request.content},'%'))
+        </if>
+        <if test="request.taskStatusList != null">
+            AND cooperation.cooperation_status in
+            <foreach collection="request.taskStatusList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="request.priority != null">
+            AND submit.priority = #{request.priority}
+        </if>
+        <if test="request.severity != null">
+            AND submit.severity = #{request.severity}
+        </if>
+        <if test="request.isTimeOut != null or request.status == 6">
+            <if test="request.isTimeOut == 0">
+                AND IFNULL(cooperation.submit_time, NOW()) &lt;= cooperation.finish_deadline
+            </if>
+            <if test="request.isTimeOut == 1 or request.status == 6">
+                AND IFNULL(cooperation.submit_time, NOW()) &gt; cooperation.finish_deadline
+            </if>
+        </if>
+        ORDER BY submit.priority DESC, submit.severity DESC, cooperation.sort DESC, cooperation.create_time DESC
+    </select>
+
+    <select id="handingCooperationPage"
+            resultMap="com.framework.emt.system.infrastructure.exception.task.task.mapper.ExceptionTaskMapper.taskResult">
+        SELECT
+        <include refid="task_cooperation_response"/>
+        <include
+                refid="com.framework.emt.system.infrastructure.exception.task.task.mapper.ExceptionTaskMapper.task_response"/>
+        cooperation.id,
+        cooperation.create_time,
+        cooperation.update_time,
+        cooperation.create_user,
+        cooperation.update_user
+        FROM
+        emt_exception_task_cooperation cooperation
+        LEFT JOIN
+        emt_exception_task task ON task.id = cooperation.exception_task_id
+        AND task.handing_version = cooperation.handing_version AND task.is_deleted = 0
+        WHERE cooperation.is_deleted = 0
+        <if test="userId != null">
+            AND cooperation.create_user = #{userId}
+        </if>
+        <if test="request.handingId != null">
+            AND cooperation.exception_task_handing_id = #{request.handingId}
+        </if>
+    </select>
+
+    <select id="findExportDataCount" resultType="java.lang.Long">
+        SELECT
+        count(1)
+        FROM
+        emt_exception_task_cooperation cooperation
+        LEFT JOIN
+        emt_exception_task task ON task.id = cooperation.exception_task_id
+        AND task.handing_version = cooperation.handing_version AND task.is_deleted = 0
+        LEFT JOIN
+        emt_exception_task_submit submit ON submit.exception_task_id = task.id
+        AND submit.submit_version = task.submit_version
+        WHERE cooperation.is_deleted = 0
+        <if test="userId != null">
+            AND cooperation.user_id = #{userId}
+        </if>
+        <if test="request.code != null and request.code != ''">
+            AND cooperation.id LIKE CONCAT('%',#{request.code},'%')
+        </if>
+        <if test="request.title != null and request.title != ''">
+            AND cooperation.title LIKE CONCAT('%',#{request.title},'%')
+        </if>
+        <if test="request.status != null  and request.status !=5">
+            AND cooperation.cooperation_status = #{request.status}
+        </if>
+        <if test="request.status != null and request.status ==5">
+            AND cooperation.cooperation_status in(1,3,4)
+        </if>
+        <if test="request.cooperationStatus != null">
+            AND cooperation.cooperation_status = #{request.cooperationStatus}
+        </if>
+        <if test="request.cooperationSubStatus != null">
+            AND cooperation.cooperation_sub_status = #{request.cooperationSubStatus}
+        </if>
+        <if test="request.exceptionCode != null and request.exceptionCode != ''">
+            AND task.id LIKE CONCAT('%',#{request.exceptionCode},'%')
+        </if>
+        <if test="request.priority != null">
+            AND submit.priority = #{request.priority}
+        </if>
+        <if test="request.severity != null">
+            AND submit.severity = #{request.severity}
+        </if>
+        <if test="request.isTimeOut != null">
+            <if test="request.isTimeOut == 0">
+                AND IFNULL(cooperation.submit_time, NOW()) &lt;= cooperation.finish_deadline
+            </if>
+            <if test="request.isTimeOut == 1">
+                AND IFNULL(cooperation.submit_time, NOW()) &gt; cooperation.finish_deadline
+            </if>
+        </if>
+        <if test="ids != null and ids.size > 0">
+            AND cooperation.id IN
+            <foreach collection="ids" index="index" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+    </select>
+    <resultMap id="findExportData"
+               type="com.framework.emt.system.domain.task.cooperation.response.TaskCooperationExportResponse"
+               autoMapping="true">
+        <!--提报-->
+        <result property="submitExtendField" column="submit_extend_field"
+                typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+        <result property="responseExtendField" column="response_extend_field"
+                typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+        <result property="handingExtendField" column="handing_extend_field"
+                typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+        <result property="suspendExtendField" column="suspend_extend_field"
+                typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+        <result property="cooperationExtendField" column="cooperation_extend_field"
+                typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+    </resultMap>
+    <select id="findExportData"
+            resultMap="findExportData">
+        SELECT
+        task.id AS taskId,
+        cooperation.id AS cooperationId,
+        cooperation.cooperation_status,
+        submit.priority,
+        submit.severity,
+        cooperation.title,
+        cooperation.finish_deadline,
+        submit.submit_extend_datas as submit_extend_field,
+        response.submit_extend_datas as response_extend_field,
+        handing.extend_datas as handing_extend_field,
+        handing.suspend_extend_datas as suspend_extend_field,
+        cooperation.submit_extend_datas as cooperation_extend_field,
+        submit.exception_process_title,
+        submit.workspace_location_id AS workspace_id,
+        (
+        CASE
+        WHEN workspace.parent_id = 0 THEN workspace.title
+        ELSE (
+
+        select
+        GROUP_CONCAT(title) from (
+        select * from (
+
+        WITH RECURSIVE parent_categories AS (
+        SELECT id, title, parent_id
+        FROM emt_workspace_location
+        WHERE id = submit.workspace_location_id
+
+        UNION ALL
+
+        SELECT ec.id, ec.title, ec.parent_id
+        FROM emt_workspace_location ec
+        INNER JOIN parent_categories pc ON ec.id = pc.parent_id
+        )
+        select * from parent_categories
+        ) as date) title_date)
+        END
+        ) AS workspace_name,
+        cooperation.submit_time as cooperation_time,
+        cooperation_user.name as cooperation_user_name,
+        cooperation.accept_time,
+        cooperation.submit_time,
+        cooperation.create_time,
+        cooperation.update_time,
+        cooperation.create_user,
+        cooperation.update_user
+        FROM
+        emt_exception_task_cooperation cooperation
+        LEFT JOIN
+        emt_exception_task task ON task.id = cooperation.exception_task_id
+        AND task.handing_version = cooperation.handing_version AND task.is_deleted = 0
+        left JOIN
+        emt_exception_task_response response ON task.id = response.exception_task_id
+        AND task.response_version = response.response_version
+        LEFT JOIN
+        emt_exception_task_handing handing ON handing.exception_task_id = task.id
+        AND handing.handing_version = task.handing_version
+        LEFT JOIN
+        emt_exception_task_submit submit ON submit.exception_task_id = task.id
+        AND submit.submit_version = task.submit_version
+        LEFT JOIN
+        emt_workspace_location workspace ON workspace.id = submit.workspace_location_id
+        LEFT JOIN
+        ft_user cooperation_user ON cooperation_user.id = cooperation.user_id AND
+        cooperation_user.is_deleted = 0
+        WHERE cooperation.is_deleted = 0
+        <if test="userId != null">
+            AND cooperation.user_id = #{userId}
+        </if>
+        <if test="request.code != null and request.code != ''">
+            AND cooperation.id LIKE CONCAT('%',#{request.code},'%')
+        </if>
+        <if test="request.title != null and request.title != ''">
+            AND cooperation.title LIKE CONCAT('%',#{request.title},'%')
+        </if>
+        <if test="request.status != null  and request.status !=5">
+            AND cooperation.cooperation_status = #{request.status}
+        </if>
+        <if test="request.status != null and request.status ==5">
+            AND cooperation.cooperation_status in(1,3,4)
+        </if>
+        <if test="request.cooperationStatus != null">
+            AND cooperation.cooperation_status = #{request.cooperationStatus}
+        </if>
+        <if test="request.cooperationSubStatus != null">
+            AND cooperation.cooperation_sub_status = #{request.cooperationSubStatus}
+        </if>
+        <if test="request.exceptionCode != null and request.exceptionCode != ''">
+            AND task.id LIKE CONCAT('%',#{request.exceptionCode},'%')
+        </if>
+        <if test="request.priority != null">
+            AND submit.priority = #{request.priority}
+        </if>
+        <if test="request.severity != null">
+            AND submit.severity = #{request.severity}
+        </if>
+        <if test="request.isTimeOut != null">
+            <if test="request.isTimeOut == 0">
+                AND IFNULL(cooperation.submit_time, NOW()) &lt;= cooperation.finish_deadline
+            </if>
+            <if test="request.isTimeOut == 1">
+                AND IFNULL(cooperation.submit_time, NOW()) &gt; cooperation.finish_deadline
+            </if>
+        </if>
+        <if test="ids != null and ids.size > 0">
+            AND cooperation.id IN
+            <foreach collection="ids" index="index" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+        group by task.id
+        ORDER BY submit.priority DESC, submit.severity DESC, cooperation.sort DESC, cooperation.create_time DESC
+    </select>
+
+</mapper>

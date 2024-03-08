@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.framework.emt.system.domain.exception.mapper.ExceptionProcessMapper">
+
+    <resultMap id="result"
+               type="com.framework.emt.system.domain.exception.response.ExceptionProcessResponse"
+               autoMapping="true">
+        <result property="submitExtendFieldList" column="submit_extend_field"
+                typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+        <result property="responseUserIds" column="response_user_ids"
+                typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+        <result property="responseExtendFieldList" column="response_extend_field"
+                typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+        <result property="handingUserIds" column="handing_user_ids"
+                typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+        <result property="handingExtendFieldList" column="handing_extend_field"
+                typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+        <result property="pendingExtendFieldList" column="pending_extend_field"
+                typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+        <result property="cooperateExtendFieldList" column="cooperate_extend_field"
+                typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+        <result property="checkUserIds" column="check_user_ids"
+                typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+        <result property="checkExtendFieldList" column="check_extend_field"
+                typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+        <collection property="exceptionReasonItems"
+                    ofType="com.framework.emt.system.domain.tag.response.TagResponse">
+            <result property="id" column="exception_reason_item_id"/>
+            <result property="content" column="exception_reason_item"/>
+            <result property="type" column="exception_reason_item_type"/>
+        </collection>
+    </resultMap>
+
+    <resultMap id="submitResult"
+               type="com.framework.emt.system.domain.exception.response.ExceptionProcessSubmitResponse"
+               autoMapping="true">
+        <result property="submitExtendFieldList" column="submit_extend_field"
+                typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+        <result property="responseUserIds" column="response_user_ids"
+                typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+    </resultMap>
+
+    <select id="detail" resultMap="result">
+        SELECT
+        eep.id,
+        et.id AS exception_reason_item_id,
+        et.content AS exception_reason_item,
+        et.type AS exception_reason_item_type,
+        eep.title,
+        eep.exception_category_id,
+        eec.title AS exception_category_name,
+        eep.submit_extend_field,
+        eep.response_mode,
+        eep.response_user_ids,
+        eep.response_extend_field,
+        eep.handing_mode,
+        eep.handing_user_ids,
+        eep.handing_extend_field,
+        eep.pending_extend_field,
+        eep.cooperate_extend_field,
+        eep.check_mode,
+        eep.check_condition,
+        eep.check_user_ids,
+        eep.check_extend_field,
+        eep.response_report_notice_process_id,
+        ernp_response.name AS response_report_notice_process_name,
+        eep.handing_report_notice_process_id,
+        ernp_handing.name AS handing_report_notice_process_name,
+        eep.sort,
+        eep.remark
+        FROM emt_exception_process eep
+        LEFT JOIN emt_exception_category eec ON eec.id = eep.exception_category_id AND eec.is_deleted = 0
+        LEFT JOIN emt_report_notice_process ernp_response ON ernp_response.id = eep.response_report_notice_process_id
+        AND ernp_response.is_deleted = 0
+        LEFT JOIN emt_report_notice_process ernp_handing ON ernp_handing.id = eep.handing_report_notice_process_id
+        AND ernp_handing.is_deleted = 0
+        LEFT JOIN emt_tag_exception ete ON ete.source_id = eep.id AND ete.is_deleted = 0
+        LEFT JOIN emt_tag et ON et.id = ete.tag_id AND et.is_deleted = 0
+        WHERE eep.is_deleted = 0 AND eep.id = #{id}
+    </select>
+
+    <select id="detailSubmit" resultMap="submitResult">
+        SELECT
+        eep.id,
+        eep.submit_extend_field,
+        eep.response_mode,
+        eep.response_user_ids
+        FROM emt_exception_process eep
+        WHERE eep.is_deleted = 0 AND eep.id = #{id}
+    </select>
+
+    <select id="page"
+            resultType="com.framework.emt.system.domain.exception.response.ExceptionProcessResponse">
+        SELECT
+        eep.id,
+        eep.title,
+        eep.exception_category_id,
+        eec.title AS exception_category_name,
+        eep.response_report_notice_process_id,
+        ernp_response.name AS response_report_notice_process_name,
+        eep.handing_report_notice_process_id,
+        ernp_handing.name AS handing_report_notice_process_name,
+        eep.sort,
+        eep.create_user,
+        eep.update_user,
+        eep.create_time,
+        eep.update_time
+        FROM emt_exception_process eep
+        LEFT JOIN emt_exception_category eec ON eec.id = eep.exception_category_id AND eec.is_deleted = 0
+        LEFT JOIN emt_report_notice_process ernp_response ON ernp_response.id = eep.response_report_notice_process_id
+        AND ernp_response.is_deleted = 0
+        LEFT JOIN emt_report_notice_process ernp_handing ON ernp_handing.id = eep.handing_report_notice_process_id
+        AND ernp_handing.is_deleted = 0
+        WHERE eep.is_deleted = 0
+        <if test="request.title != null and request.title != ''">
+            AND eep.title LIKE CONCAT('%',#{request.title},'%')
+        </if>
+        <if test="request.isShowItemIsNull != null and request.isShowItemIsNull == 0">
+            AND EXISTS (
+            SELECT *
+            FROM emt_exception_item eei
+            WHERE (eei.exception_category_id = eep.exception_category_id
+            OR eei.exception_category_id IN (
+            SELECT child.id
+            FROM emt_exception_category AS child
+            JOIN emt_exception_category AS parent ON child.parent_id = parent.id
+            WHERE parent.id = eep.exception_category_id
+            )) and eei.is_deleted=0
+            )
+        </if>
+
+        <if test="request.exceptionCategoryId != null">
+            AND eep.exception_category_id = #{request.exceptionCategoryId}
+        </if>
+        <if test="request.responseReportNoticeProcessId != null">
+            AND eep.response_report_notice_process_id = #{request.responseReportNoticeProcessId}
+        </if>
+        <if test="request.handingReportNoticeProcessId != null">
+            AND eep.handing_report_notice_process_id = #{request.handingReportNoticeProcessId}
+        </if>
+        <if test="request.createUserId != null">
+            AND eep.create_user LIKE CONCAT('%',#{request.createUserId},'%')
+        </if>
+        ORDER BY eep.sort, eep.id DESC
+    </select>
+
+</mapper>

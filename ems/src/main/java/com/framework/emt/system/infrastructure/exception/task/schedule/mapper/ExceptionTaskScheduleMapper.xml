@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.framework.emt.system.infrastructure.exception.task.schedule.mapper.ExceptionTaskScheduleMapper">
+
+    <select id="timeOutReportPage"
+            resultType="com.framework.emt.system.infrastructure.exception.task.schedule.response.TaskScheduleResponse">
+        SELECT
+        task_schedule.process_time_limit,
+        task_schedule.execute_status,
+        GROUP_CONCAT(task_schedule.id SEPARATOR '、') AS ids,
+        GROUP_CONCAT(accept_user.name SEPARATOR '、') AS report_user_names
+        FROM
+        emt_exception_task_schedule task_schedule
+        LEFT JOIN ft_user accept_user ON accept_user.id = task_schedule.accept_user_id
+        WHERE task_schedule.is_deleted = 0
+        AND task_schedule.time_out_type = #{timeOutType}
+        AND task_schedule.exception_task_id = #{taskId}
+        GROUP BY task_schedule.process_time_limit
+    </select>
+
+    <update id="getBySourceIdAndTemplateId">
+        update emt_exception_task_schedule set execute_status=1
+        WHERE is_deleted=0
+        AND source_id = #{sourceId} AND template_id = #{templateId} AND DATE_FORMAT(plan_send_time,
+        '%Y-%m-%d %H:%i:%s') = DATE_FORMAT(#{planSendTime},
+        '%Y-%m-%d %H:%i:%s')
+    </update>
+
+    <select id="statisticsDayTimeout"
+            resultType="com.framework.emt.system.domain.statistics.response.StatisticsTrendValueResponse">
+        <include
+                refid="com.framework.emt.system.infrastructure.exception.task.task.mapper.ExceptionTaskMapper.get_day"/>
+        SELECT
+        generated_dates.date AS date,
+        COALESCE(COUNT(DISTINCT task_schedule.exception_task_id,task_schedule.plan_send_time),0)
+        AS value
+        FROM generated_dates
+        LEFT JOIN emt_exception_task_schedule as task_schedule ON DATE(COALESCE(task_schedule.plan_send_time,
+        task_schedule.create_time)) =
+        generated_dates.date and task_schedule.is_deleted = 0
+        <if test="type != null and type =='response'">
+            AND time_out_type = 0
+        </if>
+        <if test="type != null and type =='handing'">
+            AND time_out_type = 1
+        </if>
+        <if test="type != null and type =='cooperation'">
+            AND time_out_type = 2
+        </if>
+        and execute_status !=2 and plan_send_time &lt;= now()
+        LEFT JOIN emt_exception_task_submit as submit on task_schedule.source_id=submit.id
+        and submit.is_deleted = 0
+        <if test="deptIds != null  and deptIds.size>0">
+            AND submit.dept_id in
+            <foreach collection="deptIds" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="exceptionCategoryId != null">
+            AND submit.exception_category_id = #{exceptionCategoryId}
+        </if>
+        <if test="exceptionProcessId != null">
+            AND submit.exception_process_id = #{exceptionProcessId}
+        </if>
+        <if test="workspaceLocationId != null">
+            AND submit.workspace_location_id = #{workspaceLocationId}
+        </if>
+        GROUP BY generated_dates.date
+        ORDER BY generated_dates.date;
+    </select>
+
+
+    <select id="statisticsMonthTimeout"
+            resultType="com.framework.emt.system.domain.statistics.response.StatisticsTrendValueResponse">
+        <include
+                refid="com.framework.emt.system.infrastructure.exception.task.task.mapper.ExceptionTaskMapper.get_month"/>
+        SELECT
+        DATE_FORMAT(generated_dates.start_date, '%Y-%m') as date,
+        CONCAT(DATE_FORMAT(generated_dates.start_date, '%Y-%m-%d'), '-', DATE_FORMAT(last_date,
+        '%Y-%m-%d')) AS date_range,
+        COALESCE(COUNT(DISTINCT task_schedule.exception_task_id,task_schedule.plan_send_time),0)
+        AS value
+        FROM (select CASE WHEN #{startDate} BETWEEN start_date AND last_date THEN #{startDate} ELSE start_date END AS
+        start_date,
+        CASE WHEN #{endDate} BETWEEN start_date AND last_date THEN #{endDate} ELSE last_date END AS last_date,
+        '000000' AS tenant_id from generated_dates )as generated_dates
+
+        LEFT JOIN emt_exception_task_schedule as task_schedule ON DATE(COALESCE(task_schedule.plan_send_time,
+        task_schedule.create_time)) &gt;=
+        generated_dates.start_date
+        AND DATE(COALESCE(task_schedule.plan_send_time, task_schedule.create_time)) &lt; DATE_ADD(last_date, INTERVAL 1
+        DAY)
+        and task_schedule.is_deleted = 0 and execute_status !=2 and plan_send_time &lt;= now()
+        <if test="type != null and type =='response'">
+            AND time_out_type = 0
+        </if>
+        <if test="type != null and type =='handing'">
+            AND time_out_type = 1
+        </if>
+        <if test="type != null and type =='cooperation'">
+            AND time_out_type = 2
+        </if>
+        LEFT JOIN emt_exception_task_submit as submit on task_schedule.source_id=submit.id
+        and submit.is_deleted = 0
+        <if test="deptIds != null  and deptIds.size>0">
+            AND submit.dept_id in
+            <foreach collection="deptIds" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="exceptionCategoryId != null">
+            AND submit.exception_category_id = #{exceptionCategoryId}
+        </if>
+        <if test="exceptionProcessId != null">
+            AND submit.exception_process_id = #{exceptionProcessId}
+        </if>
+        <if test="workspaceLocationId != null">
+            AND submit.workspace_location_id = #{workspaceLocationId}
+        </if>
+        GROUP BY generated_dates.start_date,last_date
+        ORDER BY generated_dates.start_date;
+    </select>
+
+
+    <select id="statisticsYearTimeout"
+            resultType="com.framework.emt.system.domain.statistics.response.StatisticsTrendValueResponse">
+        <include
+                refid="com.framework.emt.system.infrastructure.exception.task.task.mapper.ExceptionTaskMapper.get_year"/>
+        SELECT
+        generated_dates.years as date,
+        CONCAT(DATE_FORMAT(generated_dates.start_date, '%Y-%m-%d'), '-', DATE_FORMAT(generated_dates.end_date,
+        '%Y-%m-%d')) AS date_range,
+        COALESCE(COUNT(DISTINCT task_schedule.exception_task_id,task_schedule.plan_send_time),0)
+        AS value
+        FROM (select CASE WHEN #{startDate} BETWEEN start_date AND end_date THEN DATE_FORMAT(#{startDate},'%Y-%m-%d')
+        ELSE start_date END AS
+        start_date,
+        CASE WHEN #{endDate} BETWEEN start_date AND end_date THEN DATE_FORMAT(#{endDate},'%Y-%m-%d') ELSE end_date END
+        AS end_date,
+        year as years,
+        '000000' AS tenant_id
+        FROM
+        generated_dates
+        ) AS generated_dates
+
+        LEFT JOIN emt_exception_task_schedule as task_schedule ON DATE(COALESCE(task_schedule.plan_send_time,
+        task_schedule.create_time)) &gt;=
+        generated_dates.start_date
+        AND DATE(COALESCE(task_schedule.plan_send_time, task_schedule.create_time)) &lt;=
+        DATE_FORMAT(DATE_ADD(generated_dates.end_date,
+        INTERVAL 1 DAY),'%Y-%m-%d')
+        and task_schedule.is_deleted = 0 and execute_status !=2 and plan_send_time &lt;= now()
+        <if test="type != null and type =='response'">
+            AND time_out_type = 0
+        </if>
+        <if test="type != null and type =='handing'">
+            AND time_out_type = 1
+        </if>
+        <if test="type != null and type =='cooperation'">
+            AND time_out_type = 2
+        </if>
+        LEFT JOIN emt_exception_task_submit as submit on task_schedule.source_id=submit.id
+        and submit.is_deleted = 0
+        <if test="deptIds != null  and deptIds.size>0">
+            AND submit.dept_id in
+            <foreach collection="deptIds" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="exceptionCategoryId != null">
+            AND submit.exception_category_id = #{exceptionCategoryId}
+        </if>
+        <if test="exceptionProcessId != null">
+            AND submit.exception_process_id = #{exceptionProcessId}
+        </if>
+        <if test="workspaceLocationId != null">
+            AND submit.workspace_location_id = #{workspaceLocationId}
+        </if>
+        GROUP BY generated_dates.years,generated_dates.start_date,generated_dates.end_date
+        ORDER BY generated_dates.start_date;
+    </select>
+</mapper>

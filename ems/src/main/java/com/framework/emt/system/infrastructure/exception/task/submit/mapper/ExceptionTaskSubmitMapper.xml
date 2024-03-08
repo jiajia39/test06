@@ -1,0 +1,344 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.framework.emt.system.infrastructure.exception.task.submit.mapper.ExceptionTaskSubmitMapper">
+
+    <sql id="task_submit_response">
+        submit.dept_id as 'submit.dept_id',
+        submit.exception_process_id as 'submit.exception_process_id',
+        submit.exception_process_title as 'submit.exception_process_title',
+        submit.exception_category_id as 'submit.exception_category_id',
+        submit.exception_item_id as 'submit.exception_item_id',
+        submit.priority as 'submit.priority',
+        submit.severity as 'submit.severity',
+        submit.response_duration_time as 'submit.response_duration_time',
+        submit.handing_duration_time as 'submit.handing_duration_time',
+        submit.workspace_location_id as 'submit.workspace_location_id',
+        submit.fault_time as 'submit.fault_time',
+        submit.problem_desc as 'submit.problem_desc',
+        submit.submit_response_user_id as 'submit.submit_response_user_id',
+        submit.submit_files as 'submit.submit_files',
+        submit.notice_user_ids as 'submit.notice_user_ids',
+        submit.submit_extend_datas as 'submit.submit_extend_datas',
+        submit.submit_time as 'submit.submit_time',
+        submit.submit_user_id as 'submit.submit_user_id',
+        submit.reject_node as 'submit.reject_node',
+        submit.reject_source_id as 'submit.reject_source_id',
+        submit.reject_time as 'submit.reject_time',
+        submit.reject_reason as 'submit.reject_reason',
+        submit.reject_user_id as 'submit.reject_user_id',
+    </sql>
+
+    <select id="detail"
+            resultMap="com.framework.emt.system.infrastructure.exception.task.task.mapper.ExceptionTaskMapper.taskResult">
+        SELECT
+        <include
+                refid="com.framework.emt.system.infrastructure.exception.task.task.mapper.ExceptionTaskMapper.task_response"/>
+        <include refid="task_submit_response"/>
+        submit.id
+        FROM
+        emt_exception_task task
+        INNER JOIN emt_exception_task_submit submit ON task.id = submit.exception_task_id
+        AND task.submit_version = submit.submit_version
+        WHERE task.is_deleted = 0
+        AND submit.id = #{id}
+        <if test="userId != null">
+            AND submit.user_id = #{userId}
+        </if>
+    </select>
+
+    <select id="page"
+            resultMap="com.framework.emt.system.infrastructure.exception.task.task.mapper.ExceptionTaskMapper.taskResult">
+        SELECT
+        <include
+                refid="com.framework.emt.system.infrastructure.exception.task.task.mapper.ExceptionTaskMapper.task_response"/>
+        <include refid="task_submit_response"/>
+        <include
+                refid="com.framework.emt.system.infrastructure.exception.task.response.mapper.ExceptionTaskResponseMapper.task_res_response"/>
+        submit.id,
+        submit.user_id AS create_user,
+        submit.create_time,
+        submit.update_user,
+        submit.update_time
+        FROM
+        emt_exception_task task
+        INNER JOIN emt_exception_task_setting setting ON setting.id = task.exception_task_setting_id
+        INNER JOIN emt_exception_task_submit submit ON task.id = submit.exception_task_id
+        AND task.submit_version = submit.submit_version
+        LEFT JOIN emt_exception_task_response response ON task.id = response.exception_task_id
+        AND task.response_version = response.response_version AND response.is_deleted = 0
+        LEFT JOIN emt_exception_item item ON item.id=submit.exception_item_id
+        AND item.is_deleted = 0
+        WHERE task.is_deleted = 0
+        <if test="userId != null">
+            AND submit.user_id = #{userId}
+        </if>
+        <if test="isSubmit">
+            AND task.task_status >= 5
+        </if>
+        <if test="request.exceptionProcessId != null">
+            AND submit.exception_process_id = #{request.exceptionProcessId}
+        </if>
+        <if test="request.exceptionCategoryId != null">
+            AND submit.exception_category_id = #{request.exceptionCategoryId}
+        </if>
+        <if test="request.exceptionItemId != null">
+            AND submit.exception_item_id = #{request.exceptionItemId}
+        </if>
+        <if test="request.workspaceLocationId != null">
+            AND submit.workspace_location_id = #{request.workspaceLocationId}
+        </if>
+        <if test="request.code != null and request.code != ''">
+            AND task.id LIKE CONCAT('%',#{request.code},'%')
+        </if>
+        <if test="request.taskStatus != null">
+            AND task.task_status = #{request.taskStatus}
+        </if>
+        <if test="request.taskSubStatus != null">
+            AND task.task_sub_status = #{request.taskSubStatus}
+        </if>
+        <if test="request.priority != null">
+            AND submit.priority = #{request.priority}
+        </if>
+        <if test="request.severity != null">
+            AND submit.severity = #{request.severity}
+        </if>
+        <if test="request.content != null and request.content !=''">
+            AND ( task.id LIKE CONCAT('%',#{request.content},'%') or item.title LIKE CONCAT('%',#{request.content},'%'))
+        </if>
+        <if test="request.taskStatusList != null">
+            AND task.task_status in
+            <foreach collection="request.taskStatusList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="request.submitStartTime != null and request.submitEndTime != null">
+            AND submit.submit_time &gt;= #{request.submitStartTime}
+            AND submit.submit_time &lt;= #{request.submitEndTime}
+        </if>
+        group by task.id
+        ORDER BY submit.create_time DESC, submit.sort DESC, submit.priority DESC, submit.severity DESC
+    </select>
+
+    <select id="findExportDataCount" resultType="java.lang.Long">
+        SELECT
+        count(1)
+        FROM
+        emt_exception_task task
+        INNER JOIN
+        emt_exception_task_submit submit ON task.id = submit.exception_task_id
+        AND task.submit_version = submit.submit_version
+        WHERE task.is_deleted = 0
+        <if test="userId != null">
+            AND submit.user_id = #{userId}
+        </if>
+        <if test="request.exceptionProcessId != null">
+            AND submit.exception_process_id = #{request.exceptionProcessId}
+        </if>
+        <if test="request.exceptionCategoryId != null">
+            AND submit.exception_category_id = #{request.exceptionCategoryId}
+        </if>
+        <if test="request.exceptionItemId != null">
+            AND submit.exception_item_id = #{request.exceptionItemId}
+        </if>
+        <if test="request.workspaceLocationId != null">
+            AND submit.workspace_location_id = #{request.workspaceLocationId}
+        </if>
+        <if test="request.code != null and request.code != ''">
+            AND task.id LIKE CONCAT('%',#{request.code},'%')
+        </if>
+        <if test="request.taskStatus != null">
+            AND task.task_status = #{request.taskStatus}
+        </if>
+        <if test="request.taskSubStatus != null">
+            AND task.task_sub_status = #{request.taskSubStatus}
+        </if>
+        <if test="request.priority != null">
+            AND submit.priority = #{request.priority}
+        </if>
+        <if test="request.severity != null">
+            AND submit.severity = #{request.severity}
+        </if>
+        <if test="request.submitStartTime != null and request.submitEndTime != null">
+            AND submit.submit_time &gt;= #{request.submitStartTime}
+            AND submit.submit_time &lt;= #{request.submitEndTime}
+        </if>
+        <if test="ids != null and ids.size > 0">
+            AND submit.id IN
+            <foreach collection="ids" index="index" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+    </select>
+    <resultMap id="findExportData"
+               type="com.framework.emt.system.domain.task.submit.response.TaskSubmitExportResponse"
+               autoMapping="true">
+        <!--提报-->
+        <result property="submitExtendField" column="submit_extend_field"
+                typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+        <result property="responseExtendField" column="response_extend_field"
+                typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+        <result property="handingExtendField" column="handing_extend_field"
+                typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+        <result property="suspendExtendField" column="suspend_extend_field"
+                typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+    </resultMap>
+    <select id="findExportData"
+            resultMap="findExportData">
+        SELECT
+        task.id AS taskId,
+        task.task_status,
+        submit.priority,
+        submit.severity,
+        submit.response_duration_time,
+        submit.handing_duration_time,
+        submit.dept_id,
+        submit.exception_process_id,
+        submit.exception_process_title,
+        submit.exception_category_id AS category_id,
+        category.title AS category_name,
+        submit.exception_item_id AS item_id,
+        item.title AS item_name,
+        submit.workspace_location_id AS workspace_id,
+        (
+        CASE
+        WHEN workspace.parent_id = 0 THEN workspace.title
+        ELSE (
+
+        select
+        GROUP_CONCAT(title) from (
+        select * from (
+
+        WITH RECURSIVE parent_categories AS (
+        SELECT id, title, parent_id
+        FROM emt_workspace_location
+        WHERE id = submit.workspace_location_id
+
+        UNION ALL
+
+        SELECT ec.id, ec.title, ec.parent_id
+        FROM emt_workspace_location ec
+        INNER JOIN parent_categories pc ON ec.id = pc.parent_id
+        )
+        select * from parent_categories
+        ) as date) title_date)
+        END
+        ) AS workspace_name,
+        submit.submit_response_user_id,
+        response_user.name AS submit_response_user_name,
+        submit.submit_extend_datas as submit_extend_field,
+        response.submit_extend_datas as response_extend_field,
+        handing.extend_datas as handing_extend_field,
+        handing.suspend_extend_datas as suspend_extend_field,
+        submit.create_time,
+        submit.submit_time
+        FROM
+        emt_exception_task task
+        INNER JOIN
+        emt_exception_task_submit submit ON task.id = submit.exception_task_id
+        AND task.submit_version = submit.submit_version
+        left JOIN
+        emt_exception_task_response response ON task.id = response.exception_task_id
+        AND task.response_version = response.response_version
+        LEFT JOIN
+        emt_exception_task_handing handing ON task.id = handing.exception_task_id
+        AND task.handing_version = handing.handing_version
+        LEFT JOIN
+        ft_user response_user ON response_user.id = submit.submit_response_user_id
+        AND response_user.is_deleted = 0
+        LEFT JOIN
+        emt_exception_category category ON category.id = submit.exception_category_id
+        LEFT JOIN
+        emt_workspace_location workspace ON workspace.id = submit.workspace_location_id
+        LEFT JOIN
+        emt_exception_item item ON item.id = submit.exception_item_id
+        WHERE task.is_deleted = 0
+        <if test="userId != null">
+            AND submit.user_id = #{userId}
+        </if>
+        <if test="request.exceptionProcessId != null">
+            AND submit.exception_process_id = #{request.exceptionProcessId}
+        </if>
+        <if test="request.exceptionCategoryId != null">
+            AND submit.exception_category_id = #{request.exceptionCategoryId}
+        </if>
+        <if test="request.exceptionItemId != null">
+            AND submit.exception_item_id = #{request.exceptionItemId}
+        </if>
+        <if test="request.workspaceLocationId != null">
+            AND submit.workspace_location_id = #{request.workspaceLocationId}
+        </if>
+        <if test="request.code != null and request.code != ''">
+            AND task.id LIKE CONCAT('%',#{request.code},'%')
+        </if>
+        <if test="request.taskStatus != null">
+            AND task.task_status = #{request.taskStatus}
+        </if>
+        <if test="request.taskSubStatus != null">
+            AND task.task_sub_status = #{request.taskSubStatus}
+        </if>
+        <if test="request.priority != null">
+            AND submit.priority = #{request.priority}
+        </if>
+        <if test="request.severity != null">
+            AND submit.severity = #{request.severity}
+        </if>
+        <if test="request.submitStartTime != null and request.submitEndTime != null">
+            AND submit.submit_time &gt;= #{request.submitStartTime}
+            AND submit.submit_time &lt;= #{request.submitEndTime}
+        </if>
+        <if test="ids != null and ids.size > 0">
+            AND submit.id IN
+            <foreach collection="ids" index="index" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+        group by task.id
+        ORDER BY submit.create_time DESC, submit.sort DESC, submit.priority DESC, submit.severity DESC
+    </select>
+
+    <select id="submitReject"
+            resultType="com.framework.emt.system.domain.statistics.response.StatisticsProportionResponse">
+        select * from (
+        SELECT sum(submit.submit_version-1) AS count,
+        user.name as name
+        FROM emt_exception_task_submit as submit
+        LEFT JOIN ft_user as user on user.id =submit.user_id and user.is_deleted = 0
+        WHERE
+        submit.is_deleted = 0
+        and submit.submit_version > 1
+        <if test="request.startDate != null and request.endDate !=null">
+            AND submit.create_time &gt;= #{request.startDate}
+            AND submit.create_time &lt;= #{request.endDate}
+        </if>
+        <if test="request.workspaceLocationId != null">
+            AND submit.workspace_location_id = #{request.workspaceLocationId}
+        </if>
+        <if test="deptIds != null ">
+            AND submit.dept_id in
+            <foreach collection="deptIds" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        group by submit.user_id,user.name
+        )as base_date order by count desc
+        LIMIT 10;
+    </select>
+
+    <select id="findDetailById"
+            resultType="com.framework.emt.system.infrastructure.exception.task.submit.response.TaskSubmitDetailResponse">
+        SELECT
+        submit.id,
+        submit.exception_task_id AS task_id,
+        task.task_status AS status,
+        task.task_sub_status AS sub_status,
+        task.submit_version AS version
+        FROM
+        emt_exception_task_submit submit
+        LEFT JOIN emt_exception_task task ON task.id = submit.exception_task_id
+        AND task.is_deleted = 0
+        WHERE submit.is_deleted = 0
+        AND submit.id = #{id}
+        LIMIT 1
+    </select>
+
+</mapper>

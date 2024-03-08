@@ -1,0 +1,23 @@
+2024-03-08 11:41:53.734 [main] INFO  com.framework.DevOpsCenterApplicationTest - Starting DevOpsCenterApplicationTest using Java 1.8.0_281 on jiajiagao with PID 18812 (started by gj238 in D:\chushiProject\test06\devOpsCenter)
+2024-03-08 11:41:53.737 [main] DEBUG com.framework.DevOpsCenterApplicationTest - Running with Spring Boot v2.5.5, Spring v5.3.10
+2024-03-08 11:41:53.737 [main] INFO  com.framework.DevOpsCenterApplicationTest - The following profiles are active: dev
+2024-03-08 11:41:53.742 [background-preinit] INFO  org.hibernate.validator.internal.util.Version - HV000001: Hibernate Validator 6.2.0.Final
+2024-03-08 11:41:55.082 [main] INFO  o.s.d.r.config.RepositoryConfigurationDelegate - Multiple Spring Data modules found, entering strict repository configuration mode!
+2024-03-08 11:41:55.084 [main] INFO  o.s.d.r.config.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2024-03-08 11:41:55.136 [main] INFO  o.s.d.r.config.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 44 ms. Found 0 Redis repository interfaces.
+2024-03-08 11:41:55.364 [main] INFO  o.springframework.cloud.context.scope.GenericScope - BeanFactory id=da633c0a-9b30-353b-b00a-19b12c943e60
+2024-03-08 11:41:55.688 [main] INFO  o.s.c.s.PostProcessorRegistrationDelegate$BeanPostProcessorChecker - Bean 'spring.datasource.dynamic-com.baomidou.dynamic.datasource.spring.boot.autoconfigure.DynamicDataSourceProperties' of type [com.baomidou.dynamic.datasource.spring.boot.autoconfigure.DynamicDataSourceProperties] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
+2024-03-08 11:41:55.697 [main] INFO  o.s.c.s.PostProcessorRegistrationDelegate$BeanPostProcessorChecker - Bean 'com.baomidou.dynamic.datasource.spring.boot.autoconfigure.DynamicDataSourceAutoConfiguration' of type [com.baomidou.dynamic.datasource.spring.boot.autoconfigure.DynamicDataSourceAutoConfiguration$$EnhancerBySpringCGLIB$$6d6206a3] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
+2024-03-08 11:41:55.718 [main] INFO  o.s.c.s.PostProcessorRegistrationDelegate$BeanPostProcessorChecker - Bean 'dsProcessor' of type [com.baomidou.dynamic.datasource.processor.DsHeaderProcessor] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
+2024-03-08 11:41:56.390 [main] INFO  com.alibaba.druid.pool.DruidDataSource - {dataSource-1,master} inited
+2024-03-08 11:41:56.391 [main] INFO  c.b.dynamic.datasource.DynamicRoutingDataSource - dynamic-datasource - add a datasource named [master] success
+2024-03-08 11:41:56.391 [main] INFO  c.b.dynamic.datasource.DynamicRoutingDataSource - dynamic-datasource initial loaded [1] datasource,primary datasource named [master]
+2024-03-08 11:42:01.383 [main] INFO  o.s.b.actuate.endpoint.web.EndpointLinksResolver - Exposing 1 endpoint(s) beneath base path '/actuator'
+2024-03-08 11:42:01.622 [main] INFO  org.redisson.Version - Redisson 3.21.1
+2024-03-08 11:42:02.053 [redisson-netty-4-5] INFO  o.r.connection.pool.MasterPubSubConnectionPool - 1 connections initialized for 127.0.0.1/127.0.0.1:6379
+2024-03-08 11:42:02.103 [redisson-netty-4-19] INFO  org.redisson.connection.pool.MasterConnectionPool - 24 connections initialized for 127.0.0.1/127.0.0.1:6379
+2024-03-08 11:42:03.703 [main] INFO  com.framework.DevOpsCenterApplicationTest - Started DevOpsCenterApplicationTest in 10.657 seconds (JVM running for 11.326)
+2024-03-08 11:42:04.177 [SpringApplicationShutdownHook] INFO  c.b.dynamic.datasource.DynamicRoutingDataSource - dynamic-datasource start closing ....
+2024-03-08 11:42:04.180 [SpringApplicationShutdownHook] INFO  com.alibaba.druid.pool.DruidDataSource - {dataSource-1} closing ...
+2024-03-08 11:42:04.187 [SpringApplicationShutdownHook] INFO  com.alibaba.druid.pool.DruidDataSource - {dataSource-1} closed
+2024-03-08 11:42:04.187 [SpringApplicationShutdownHook] INFO  c.b.dynamic.datasource.DynamicRoutingDataSource - dynamic-datasource all closed success,bye

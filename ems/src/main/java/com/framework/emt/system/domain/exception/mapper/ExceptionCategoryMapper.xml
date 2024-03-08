@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.framework.emt.system.domain.exception.mapper.ExceptionCategoryMapper">
+
+    <select id="page"
+            resultType="com.framework.emt.system.domain.exception.response.ExceptionCategoryResponse">
+        SELECT
+        eec.id,
+        eec.parent_id,
+        eec.parent_id_path,
+        EXISTS (SELECT 1 FROM emt_exception_category
+        WHERE is_deleted = 0 AND parent_id = eec.id) AS has_children,
+        eec.title,
+        eec.sort,
+        eec.remark,
+        eec.create_user,
+        eec.update_user,
+        eec.create_time,
+        eec.update_time
+        FROM emt_exception_category eec
+        WHERE eec.is_deleted = 0
+        <if test="request.parentId != null">
+            AND eec.parent_id = #{request.parentId}
+        </if>
+        <if test="request.title != null and request.title != ''">
+            AND eec.title LIKE CONCAT('%',#{request.title},'%')
+        </if>
+        <if test="request.createUserId != null">
+            AND eec.create_user LIKE CONCAT('%',#{request.createUserId},'%')
+        </if>
+
+        ORDER BY eec.sort DESC, eec.create_time DESC
+    </select>
+
+    <select id="list"
+            resultType="com.framework.emt.system.domain.exception.response.ExceptionCategoryTreeResponse">
+        SELECT
+        eec.id,
+        eec.parent_id,
+        eec.title,
+        eec.sort,
+        eec.create_time
+        FROM emt_exception_category eec
+        WHERE eec.is_deleted = 0
+        ORDER BY eec.sort DESC, eec.create_time DESC
+    </select>
+
+    <select id="findCategoryList"
+            resultType="com.framework.emt.system.domain.exception.ExceptionCategory">
+        SELECT
+        eec.id,
+        eec.title,
+        eec.parent_id_path
+        FROM emt_exception_category eec
+        WHERE is_deleted = 0
+        <if test="idList != null">
+            AND eec.id IN
+            <foreach collection="idList" index="index" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+        <if test="titleList != null">
+            AND eec.title IN
+            <foreach collection="titleList" index="index" item="title" open="(" separator="," close=")">
+                #{title}
+            </foreach>
+        </if>
+    </select>
+
+    <select id="findChildCount"
+            resultType="com.framework.emt.system.domain.exception.response.ChildCountResponse">
+        SELECT
+        ( SELECT COUNT(1) FROM emt_exception_category eec_child WHERE eec_child.is_deleted = 0 AND eec_child.parent_id = eec_parent.id ) AS children_count,
+	    ( SELECT COUNT(1) FROM emt_exception_item eei WHERE eec_parent.id = eei.exception_category_id AND eei.is_deleted = 0 ) AS exception_item_count,
+	    ( SELECT COUNT(1) FROM emt_exception_process eep WHERE eec_parent.id = eep.exception_category_id AND eep.is_deleted = 0 ) AS exception_process_count
+        FROM emt_exception_category eec_parent WHERE eec_parent.is_deleted = 0 AND eec_parent.id = #{categoryId}
+    </select>
+
+    <select id="findByTitleParentIdStr"
+            resultType="com.framework.emt.system.domain.exception.ExceptionCategory">
+        SELECT
+        eec.id,
+        eec.title,
+        eec.parent_id_path
+        FROM emt_exception_category eec
+        WHERE is_deleted = 0
+        <if test="id != null">
+            AND eec.id != #{id}
+        </if>
+        <if test="titleParentIdStr != null and titleParentIdStr != ''">
+            AND CONCAT(eec.title, eec.parent_id) = #{titleParentIdStr}
+        </if>
+        limit 1
+    </select>
+
+    <select id="listByIds" resultType="com.framework.emt.system.domain.exception.ExceptionCategory">
+        SELECT
+        eec.id,
+        eec.parent_id,
+        eec.parent_id_path,
+        eec.title,
+        eec.code,
+        eec.enable_flag,
+        eec.sort,
+        eec.remark,
+        eec.create_user,
+        eec.update_user,
+        eec.create_time,
+        eec.update_time
+        FROM emt_exception_category eec
+        WHERE 1 = 1
+        <if test="ids != null">
+            AND eec.id IN
+            <foreach collection="ids" index="index" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+    </select>
+
+    <select id="getChildById" resultType="java.lang.Long">
+        WITH RECURSIVE subcategories AS (
+        SELECT id, parent_id,'000000' as tenant_id
+        FROM emt_exception_category
+        WHERE id = #{id}
+        UNION ALL
+        SELECT ec.id, ec.parent_id,'000000' as tenant_id
+        FROM emt_exception_category ec
+        INNER JOIN subcategories sc ON ec.parent_id = sc.id
+        )
+        SELECT id
+        FROM subcategories;
+    </select>
+
+</mapper>

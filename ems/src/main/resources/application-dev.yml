@@ -1,0 +1,232 @@
+server:
+  port: 9812
+spring:
+  application:
+    name: ems
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 50MB
+  redis:
+    # Redis服务器地址
+    host: 127.0.0.1
+    # Redis服务器连接端口
+    port: 6379
+    # Redis服务器连接密码（默认为空）
+    password:
+    # Redis数据库索引（默认为0）
+    database: 2
+    jedis:
+      pool:
+        #连接池最大连接数（使用负数代表没限制）
+        max-active: 8
+        #连接池最大阻塞时间（使用负数代表没限制）
+        max-wait: -1
+        #连接池中最大空闲连接
+        max-idle: 8
+        #连接池中最小空闲连接
+        min-idle: 0
+  datasource:
+    dynamic:
+      primary: master
+      #严格匹配数据源,默认false. true未匹配到指定数据源时抛异常,false使用默认数据源
+      strict: false
+      seata: false
+      datasource:
+        master:
+          # 使用Druid连接池
+          type: com.alibaba.druid.pool.DruidDataSource
+          #8.0以上版本用com.mysql.cj.jdbc.Driver ，8.0以下版本用com.mysql.jdbc.Driver
+          driver-class-name: com.mysql.cj.jdbc.Driver
+          # 填写你数据库的url、登录名、密码和数据库名
+          #          url: jdbc:mysql://firstouch-80.mysql.rds.aliyuncs.com:3380/ems-system?useSSL=false&useUnicode=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&transformedBitIsBoolean=true&serverTimezone=GMT%2B8&nullCatalogMeansCurrent=true&rewriteBatchedStatements=true&allowPublicKeyRetrieval=true
+          #          # 加密使用：CryptoUtils.decrypt("root")
+          #          username: firstouch_rds_user
+          #          # 加密使用：CryptoUtils.decrypt("password")
+          #          password: Ft553551
+          url: jdbc:mysql://127.0.0.1:3306/andon-emt-1?useSSL=false&useUnicode=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&transformedBitIsBoolean=true&serverTimezone=GMT%2B8&nullCatalogMeansCurrent=true&rewriteBatchedStatements=true&allowPublicKeyRetrieval=true
+          # 加密使用：CryptoUtils.decrypt("root")
+          username: root
+          # 加密使用：CryptoUtils.decrypt("password")
+          password: 123456
+          # url: jdbc:mysql://127.0.0.1:3306/andon-emt-1?characterEncoding=utf8&connectTimeout=1000&socketTimeout=3000&autoReconnect=true&useUnicode=true&useSSL=false&serverTimezone=UTC
+          # # 加密使用：CryptoUtils.decrypt("root")
+          # username: root
+          # # 加密使用：CryptoUtils.decrypt("password")
+          # password: 123456
+
+# mybatis
+mybatis-plus:
+  type-enums-package: com.demo.mybatisplus.enum
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    #log-impl: org.apache.ibatis.logging.nologging.NoLoggingImpl
+    default-enum-type-handler: org.apache.ibatis.type.EnumOrdinalTypeHandler
+  global-config:
+    db-config:
+      # 逻辑删除配置
+      # 逻辑删除字段
+      logic-delete-field: isDeleted
+      # 逻辑删除全局值（1表示已删除，这也是Mybatis Plus的默认配置）
+      logic-delete-value: 1
+      # 逻辑未删除全局值（0表示未删除，这也是Mybatis Plus的默认配置）
+      logic-not-delete-value: 0
+ding-talk:
+  #  clientId: dingwhlx5w44fthaioxv
+  #  clientSecret: fmWoQ0EBfk6flkUGPQUHWjwO2zEp5W400qyK6YR8eju_6P5zsQIwWo7bddvq-uZ4
+  #  agentId: 2929652644
+  clientId: dingjibbcp1bbm0g3tqv
+  clientSecret: sL65a-Mz1B-SEZDD4sIo-6Eh90-Ipgk2Kdiv6M8O4B2kdaQ8ZwM0GCfMdkx7GW8y
+  agentId: 2904217466
+  messageUrl: https://test.firstouch.com.cn/ems-client-web/#/pages/login/login
+
+framework:
+  wx:
+    mp:
+      module-name: admin
+      configs:
+        #微信小程序的appid
+        - appId: wx68d3a4a454055698
+          #微信小程序的Secret
+          secret: 8034bfd42392014e17731f460fb3024a
+          #微信小程序消息服务器配置的token
+          token: firstouch
+          #微信小程序消息服务器配置的EncodingAESKey
+          aesKey:
+    cp:
+      module-name: admin
+      corpId: ww06567d585b5557e3
+      appConfigs:
+        - agentId: 1000013
+          secret: fqRJ-FwjHQMT-Tp6-l7yviFLEuIxNY7vUnty0S4aqB4
+          token: firstouch
+          aesKey: wQXFVg48DwFiPxyneoTsMZTWhasE9YOGLOl4DzHHzcM
+          url: https://test.firstouch.com.cn/ems-client-web/#/pages/login/login
+
+  language:
+    enabled: false
+  message:
+    send:
+      thread-run: true
+      thread-count: 10
+    push:
+      uni-push-url: https://fc-mp-deb63d66-f470-45ab-8245-51d5890e9902.next.bspapp.com/send
+      wx:
+        wx-mp-template-id: K5bzVQufhF4OsSCfPCNE_KIxGZ-qEnylG4UzPj0tyKc
+        open_url: https://test.firstouch.com.cn/ems-client-web/#/pages/message/message?type=1
+
+  license:
+    enabled: false
+  dynamic-database:
+    enabled: true
+  preview:
+    url: /kk/onlinePreview?url=
+  jackson:
+    null-to-empty: false
+    big-num-to-string: true
+    support-text-plain: true
+  tenant:
+    enabled: true
+    default_id: "000000"
+    tenant_key: tenant_id
+    #排除租户过滤的表
+    exclude:
+      - ft_region
+      - ft_dict
+      - ft_dict_biz
+      - ft_menu
+      - ft_param
+      - ft_post
+      - ft_scope_data
+      - ft_scope_api
+  xxl-job:
+    app-name: xxl-job-executor-emt1
+    ### 调度中心部署根地址 [选填]：如调度中心集群部署存在多个地址则用逗号分隔。执行器将会使用该地址进行"执行器心跳注册"和"任务结果回调"；为空则关闭自动注册；
+    admin-addresses: http://127.0.0.1:9819/ems-xxl-job-admin
+    ### 执行器端口号 [选填]：小于等于0则自动获取；默认端口为9999，单机部署多个执行器时，注意要配置不同执行器端口；
+    port: -1
+  #token配置
+  jwt:
+    #是否有状态,有状态则存储token到redis，访问时进行对比
+    state: true
+    #token签名
+    sign-key: frameworkpowerfulmicroservicearchitectureupgradedandoptimizedfromacommercialproject
+    #是否只可同时在线一人
+    single: true
+  xss:
+    enabled: false
+    skip-url:
+  file:
+    #远程上传模式，即上传到网站目录，通过upload-domain和context-path 以及文件名可以下载
+    remote-mode: false
+    upload-domain: /static
+    context-path: "/"
+    #图片是否压缩
+    compress: true
+    #压缩比例
+    compress-scale: 2.00
+    #图片缩放选择:true放大;false缩小
+    compress-flag: false
+    remote-path: ""
+    relative-path: "/public/static"
+  swagger:
+    enabled: true
+    microservices: "/ems-admin"
+    admin-docket-package-list:
+      - com.framework
+  project:
+    #项目名称（英文）用来控制全局url
+    name: framework
+    #项目版本（英文）用来控制全局url
+    version: v1
+  redis:
+    enabled: true
+    #redis key 前缀
+    prefix: "framework::${framework.project.name}::${framework.project.version}::"
+    #redis 默认过期时间（秒）
+    default-time-out: 30
+    #序列化方式 1.ProtoStuff 2.JSON 3.JDK
+    serializer-type: ProtoStuff
+  # 全局统一地址前缀，不配置(默认 /api/)
+  address:
+    prefix: /api/${framework.project.name}/${framework.project.version}
+  secure:
+    #鉴权开启/关闭(开启后拦截所有url)判断用户是否登录
+    enabled: true
+    #放行接口(列表)
+    skip-url:
+      - /static/**
+      - /favicon.ico
+    #客户端鉴权开启
+    client-enabled: true
+    client:
+      - client-id: admin
+        path-patterns:
+          - ${framework.address.prefix}/admin/**
+        skip-url:
+          # 登录接口放行
+          - ${framework.address.prefix}/admin/system/login/token
+          # 验证码接口放行
+          - ${framework.address.prefix}/admin/system/login/captcha
+          # 阿里云oss回调处理接口放行
+          - ${framework.address.prefix}/admin/oss/oss-endpoint/ali-oss-call-back
+          # 租户信息放行
+          - ${framework.address.prefix}/admin/system/tenant/info
+          # 看板数据放行
+          - ${framework.address.prefix}/admin/exception/task/statistics/dept/board/summary
+          - ${framework.address.prefix}/admin/exception/task/statistics/dept/board/page
+          # 部门树形接口
+          - ${framework.address.prefix}/admin/system/dept/tree
+          # 异常流程列表放行
+          - ${framework.address.prefix}/admin/exception/**
+          - ${framework.address.prefix}/admin/system/upload/file
+          - ${framework.address.prefix}/admin/exception/task/submit/create
+          - ${framework.address.prefix}/admin/exception/task/submit
+          - ${framework.address.prefix}/admin/exception/response/{id}/accept
+          - ${framework.address.prefix}/admin/wx/mp/**
+          - ${framework.address.prefix}/admin/ding-talk/**
+          - ${framework.address.prefix}/admin/wx/cp/**
+          - ${framework.address.prefix}/admin/goodsCategory/**
+          - ${framework.address.prefix}/admin/goods/**
+logging:
+  config: classpath:log/logback-dev.xml

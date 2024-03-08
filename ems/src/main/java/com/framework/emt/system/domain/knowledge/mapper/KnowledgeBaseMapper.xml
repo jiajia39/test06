@@ -1,0 +1,273 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.framework.emt.system.domain.knowledge.mapper.KnowledgeBaseMapper">
+
+    <resultMap id="detailResult"
+               type="com.framework.emt.system.domain.knowledge.response.KnowledgeBaseResponse"
+               autoMapping="true">
+        <result property="files" column="files"
+                typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+        <collection property="keyWords"
+                    ofType="com.framework.emt.system.domain.tag.response.TagResponse">
+            <result property="id" column="key_word_id"/>
+            <result property="content" column="key_word"/>
+            <result property="type" column="key_word_type"/>
+        </collection>
+    </resultMap>
+
+    <resultMap id="pageResult"
+               type="com.framework.emt.system.domain.knowledge.response.KnowledgeBaseResponse"
+               autoMapping="true">
+        <result property="keyWords" column="keyWords"
+                typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+    </resultMap>
+
+    <select id="detail" resultMap="detailResult">
+        SELECT ekb.id,
+               ekb.knowledge_base_category_id,
+               ekbc.title AS knowledge_base_category,
+               ekb.exception_item_id,
+               eei.title  AS exception_item,
+               et.id      AS key_word_id,
+               et.content AS key_word,
+               et.type    AS key_word_type,
+               ekb.title,
+               ekb.problem_description,
+               ekb.problem_analysis,
+               ekb.prevent_recurrence_measure,
+               ekb.suggestion,
+               ekb.files,
+               ekb.enable_flag,
+               ekb.sort,
+               ekb.remark
+        FROM emt_knowledge_base ekb
+                 LEFT JOIN emt_exception_item eei ON eei.id = ekb.exception_item_id AND eei.is_deleted = 0
+                 LEFT JOIN emt_knowledge_base_category ekbc
+                           ON ekbc.id = ekb.knowledge_base_category_id AND ekbc.is_deleted = 0
+                 LEFT JOIN emt_tag_exception ete ON ete.source_id = ekb.id AND ete.is_deleted = 0
+                 LEFT JOIN emt_tag et ON et.id = ete.tag_id AND et.is_deleted = 0
+        WHERE ekb.is_deleted = 0
+          AND ekb.id = #{knowledgeBaseId}
+    </select>
+
+    <select id="page" resultMap="pageResult">
+        select * from ( SELECT
+        ekb.id,
+        ekb.knowledge_base_category_id,
+        ekbc.title AS knowledge_base_category_name,
+        ekb.exception_item_id,
+        eei.title AS exception_item,
+        eei.priority AS exception_item_priority,
+        eei.severity AS exception_item_severity,
+        (
+        SELECT JSON_ARRAYAGG(
+        JSON_OBJECT(
+        'id', et.id,
+        'content', et.content,
+        'type', et.type
+        )
+        )
+        FROM emt_tag_exception ete
+        LEFT JOIN emt_tag et ON et.id = ete.tag_id AND et.is_deleted = 0
+        WHERE ete.source_id = ekb.id AND ete.is_deleted = 0
+        ) AS keyWords,
+        ekb.title,
+        ekb.problem_description,
+        ekb.problem_analysis,
+        ekb.prevent_recurrence_measure,
+        ekb.suggestion,
+        ekb.enable_flag,
+        ekb.sort,
+        ekb.remark,
+        ekb.create_user,
+        ekb.update_user,
+        ekb.create_time,
+        ekb.update_time
+        FROM emt_knowledge_base ekb
+        LEFT JOIN emt_exception_item eei ON eei.id = ekb.exception_item_id AND eei.is_deleted = 0
+        LEFT JOIN emt_knowledge_base_category ekbc ON ekbc.id = ekb.knowledge_base_category_id AND ekbc.is_deleted = 0
+        WHERE ekb.is_deleted = 0
+        <if test="request.title != null and request.title != ''">
+            AND ekb.title LIKE CONCAT('%',#{request.title},'%')
+        </if>
+
+        <if test="request.knowledgeBaseCategoryId != null">
+            AND ekb.knowledge_base_category_id = #{request.knowledgeBaseCategoryId}
+        </if>
+        <if test="request.exceptionItemId != null">
+            AND ekb.exception_item_id = #{request.exceptionItemId}
+        </if>
+        <if test="request.priority != null">
+            AND eei.priority = #{request.priority}
+        </if>
+        <if test="request.severity != null">
+            AND eei.severity = #{request.severity}
+        </if>
+        <if test="request.enableFlag != null">
+            AND ekb.enable_flag = #{request.enableFlag}
+        </if>
+        )base
+        <if test="request.keyWord != null and request.keyWord != ''">
+            where keyWords LIKE CONCAT('%',#{request.keyWord},'%')
+        </if>
+        ORDER BY sort DESC, create_time DESC
+    </select>
+
+    <select id="pageApp" resultMap="pageResult">
+        select * from( SELECT
+        ekb.id,
+        ekb.knowledge_base_category_id,
+        ekbc.title AS knowledge_base_category_name,
+        ekb.exception_item_id,
+        eei.title AS exception_item,
+        (
+        SELECT JSON_ARRAYAGG(
+        JSON_OBJECT(
+        'id', et.id,
+        'content', et.content,
+        'type', et.type
+        )
+        )
+        FROM emt_tag_exception ete
+        LEFT JOIN emt_tag et ON et.id = ete.tag_id AND et.is_deleted = 0
+        WHERE ete.source_id = ekb.id AND ete.is_deleted = 0
+        ) AS keyWords,
+        ekb.title,
+        ekb.problem_description,
+        ekb.problem_analysis,
+        ekb.prevent_recurrence_measure,
+        ekb.suggestion,
+        ekb.sort,
+        ekb.remark,
+        ekb.create_time
+        FROM emt_knowledge_base ekb
+        LEFT JOIN emt_exception_item eei ON eei.id = ekb.exception_item_id AND eei.is_deleted = 0
+        LEFT JOIN emt_knowledge_base_category ekbc ON ekbc.id = ekb.knowledge_base_category_id AND ekbc.is_deleted = 0
+        WHERE ekb.is_deleted = 0 AND ekb.enable_flag = 1
+        ) base
+        <if test="request.keyWord != null and request.keyWord != ''">
+            where ( title LIKE CONCAT('%',#{request.keyWord},'%')
+            OR exception_item LIKE CONCAT('%',#{request.keyWord},'%')
+            OR keyWords LIKE CONCAT('%',#{request.keyWord},'%') )
+        </if>
+        ORDER BY sort DESC, create_time DESC
+    </select>
+
+    <select id="detailApp" resultMap="detailResult">
+        SELECT ekb.id,
+               ekb.knowledge_base_category_id,
+               ekbc.title AS knowledge_base_category_name,
+               ekb.exception_item_id,
+               eei.title  AS exception_item,
+               et.id      AS key_word_id,
+               et.content AS key_word,
+               et.type    AS key_word_type,
+               ekb.title,
+               ekb.problem_description,
+               ekb.problem_analysis,
+               ekb.prevent_recurrence_measure,
+               ekb.suggestion,
+               ekb.files,
+               ekb.remark
+        FROM emt_knowledge_base ekb
+                 LEFT JOIN emt_exception_item eei ON eei.id = ekb.exception_item_id AND eei.is_deleted = 0
+                 LEFT JOIN emt_knowledge_base_category ekbc
+                           ON ekbc.id = ekb.knowledge_base_category_id AND ekbc.is_deleted = 0
+                 LEFT JOIN emt_tag_exception ete ON ete.source_id = ekb.id AND ete.is_deleted = 0
+                 LEFT JOIN emt_tag et ON et.id = ete.tag_id AND et.is_deleted = 0
+        WHERE ekb.is_deleted = 0
+          AND ekb.enable_flag = 1
+          AND ekb.id = #{knowledgeBaseId}
+    </select>
+
+    <select id="findExportDataCount" resultType="java.lang.Long">
+        SELECT count(1) FROM emt_knowledge_base ekb
+        LEFT JOIN emt_exception_item eei ON eei.id = ekb.exception_item_id AND eei.is_deleted = 0
+        LEFT JOIN emt_knowledge_base_category ekbc ON ekbc.id = ekb.knowledge_base_category_id AND ekbc.is_deleted = 0
+        WHERE ekb.is_deleted = 0
+        <if test="request.title != null and request.title != ''">
+            AND ekb.title LIKE CONCAT('%',#{request.title},'%')
+        </if>
+        <if test="request.keyWord != null and request.keyWord != ''">
+            AND ( SELECT GROUP_CONCAT(et.content) FROM emt_tag_exception ete
+            LEFT JOIN emt_tag et ON et.id = ete.tag_id AND et.is_deleted = 0
+            WHERE ete.source_id = ekb.id AND ete.is_deleted = 0 ) LIKE CONCAT('%',#{request.keyWord},'%')
+        </if>
+        <if test="request.knowledgeBaseCategoryId != null">
+            AND ekb.knowledge_base_category_id = #{request.knowledgeBaseCategoryId}
+        </if>
+        <if test="request.exceptionItemId != null">
+            AND ekb.exception_item_id = #{request.exceptionItemId}
+        </if>
+        <if test="request.priority != null">
+            AND eei.priority = #{request.priority}
+        </if>
+        <if test="request.severity != null">
+            AND eei.severity = #{request.severity}
+        </if>
+        <if test="request.enableFlag != null">
+            AND ekb.enable_flag = #{request.enableFlag}
+        </if>
+        <if test="idList.size > 0">
+            AND ekb.id IN
+            <foreach collection="idList" index="index" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+    </select>
+
+    <select id="findExportData"
+            resultType="com.framework.emt.system.domain.knowledge.response.KnowledgeBaseExportResponse">
+        SELECT
+        ekb.title,
+        ekbc.title AS knowledge_base_category,
+        eei.title AS exception_item,
+        (CASE WHEN eei.priority = 0 THEN '轻微' WHEN eei.priority = 1 THEN '一般'
+        WHEN eei.priority = 2 THEN '紧急' WHEN eei.priority = 3 THEN '特急' END) AS exception_item_priority,
+        (CASE WHEN eei.severity = 0 THEN '轻微' WHEN eei.severity = 1 THEN '一般'
+        WHEN eei.severity = 2 THEN '严重' WHEN eei.severity = 3 THEN '致命' END) AS exception_item_severity,
+        ( SELECT GROUP_CONCAT(et.content SEPARATOR '、') FROM emt_tag_exception ete
+        LEFT JOIN emt_tag et ON et.id = ete.tag_id AND et.is_deleted = 0
+        WHERE ete.source_id = ekb.id AND ete.is_deleted = 0 ) AS key_words,
+        (CASE WHEN ekb.enable_flag = 0 THEN '禁用' WHEN ekb.enable_flag = 1 THEN '启用' END) AS status_name,
+        ekb.create_user,
+        ekb.create_time,
+        ekb.update_user,
+        ekb.update_time
+        FROM emt_knowledge_base ekb
+        LEFT JOIN emt_exception_item eei ON eei.id = ekb.exception_item_id AND eei.is_deleted = 0
+        LEFT JOIN emt_knowledge_base_category ekbc ON ekbc.id = ekb.knowledge_base_category_id AND ekbc.is_deleted = 0
+        WHERE ekb.is_deleted = 0
+        <if test="request.title != null and request.title != ''">
+            AND ekb.title LIKE CONCAT('%',#{request.title},'%')
+        </if>
+        <if test="request.keyWord != null and request.keyWord != ''">
+            AND ( SELECT GROUP_CONCAT(et.content) FROM emt_tag_exception ete
+            LEFT JOIN emt_tag et ON et.id = ete.tag_id AND et.is_deleted = 0
+            WHERE ete.source_id = ekb.id AND ete.is_deleted = 0 ) LIKE CONCAT('%',#{request.keyWord},'%')
+        </if>
+        <if test="request.knowledgeBaseCategoryId != null">
+            AND ekb.knowledge_base_category_id = #{request.knowledgeBaseCategoryId}
+        </if>
+        <if test="request.exceptionItemId != null">
+            AND ekb.exception_item_id = #{request.exceptionItemId}
+        </if>
+        <if test="request.priority != null">
+            AND eei.priority = #{request.priority}
+        </if>
+        <if test="request.severity != null">
+            AND eei.severity = #{request.severity}
+        </if>
+        <if test="request.enableFlag != null">
+            AND ekb.enable_flag = #{request.enableFlag}
+        </if>
+        <if test="idList.size > 0">
+            AND ekb.id IN
+            <foreach collection="idList" index="index" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+        ORDER BY ekb.sort DESC, ekb.create_time DESC
+    </select>
+
+</mapper>
